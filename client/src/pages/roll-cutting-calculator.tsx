@@ -551,8 +551,20 @@ export default function RollCuttingCalculatorPage() {
                     </div>
                     <div className="flex justify-between border-b border-border/50 pb-1">
                       <span className="text-muted-foreground">Остаток Джамба:</span>
-                      <span className="font-medium">{plan.length_waste_m} м</span>
+                      <span className="font-medium">{plan.remaining_jumbo_m} м</span>
                     </div>
+                    {plan.shortage_rolls > 0 && (
+                      <>
+                        <div className="flex justify-between border-b border-border/50 pb-1 text-destructive">
+                          <span className="text-muted-foreground text-destructive/80">Не хватает циклов:</span>
+                          <span className="font-medium">{plan.shortage_cycles}</span>
+                        </div>
+                        <div className="flex justify-between border-b border-border/50 pb-1 text-destructive">
+                          <span className="text-muted-foreground text-destructive/80">Не хватает метров:</span>
+                          <span className="font-medium">{plan.shortage_length_m} м</span>
+                        </div>
+                      </>
+                    )}
                     {plan.estimated_hours && (
                       <div className="flex justify-between pt-1">
                         <span className="text-muted-foreground">Примерное время:</span>

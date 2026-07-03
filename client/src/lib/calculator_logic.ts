@@ -108,6 +108,9 @@ export type CalcResult = {
   waste_area_m2: number;
   waste_percent: number;
   waste_per_side_mm: number;
+  remaining_jumbo_m: number;
+  shortage_cycles: number;
+  shortage_length_m: number;
 };
 
 export function calculate(
@@ -212,6 +215,12 @@ export function calculate(
   const shortage_rolls = Math.max(0, order_rolls - total_main_rolls);
 
   let used_length_m = cycles_used * roll_length_m + SETUP_LENGTH_M;
+  
+  // Calculate exact remaining jumbo before shortage logic overwrites used_length_m
+  const remaining_jumbo_m = Math.max(0, big_roll_length_m - used_length_m);
+  const shortage_cycles = Math.max(0, cycles_needed - cycles_used);
+  const shortage_length_m = shortage_cycles * roll_length_m;
+
   if (shortage_rolls > 0) {
     used_length_m = big_roll_length_m;
   }
@@ -257,5 +266,8 @@ export function calculate(
     waste_area_m2: Math.round(waste_area_m2 * 10) / 10,
     waste_percent: Math.round(waste_percent * 10) / 10,
     waste_per_side_mm,
+    remaining_jumbo_m,
+    shortage_cycles,
+    shortage_length_m,
   };
 }
