@@ -150,10 +150,10 @@ function Scheme({ plan }: { plan: CalcResult }) {
 
               const bg =
                 p.kind === "primary"
-                  ? stripColor(idx)
+                  ? "hsl(var(--muted-foreground))"
                   : p.kind === "secondary"
-                    ? "hsl(188 86% 40%)"
-                    : "hsl(230 10% 70% / .35)";
+                    ? "hsl(var(--primary))"
+                    : p.kind === "waste" ? "hsl(var(--destructive) / 0.8)" : "hsl(var(--destructive) / 0.4)";
 
               return (
                 <div
@@ -197,21 +197,21 @@ function Scheme({ plan }: { plan: CalcResult }) {
           <div className="flex items-center gap-2" data-testid="legend-primary">
             <span
               className="h-2.5 w-2.5 rounded-full"
-              style={{ background: stripColor(0) }}
+              style={{ background: "hsl(var(--muted-foreground))" }}
             />
             Основная
           </div>
           <div className="flex items-center gap-2" data-testid="legend-secondary">
             <span
               className="h-2.5 w-2.5 rounded-full"
-              style={{ background: "hsl(188 86% 40%)" }}
+              style={{ background: "hsl(var(--primary))" }}
             />
             Доп.
           </div>
           <div className="flex items-center gap-2" data-testid="legend-waste">
             <span
               className="h-2.5 w-2.5 rounded-full"
-              style={{ background: "hsl(230 10% 70% / .35)" }}
+              style={{ background: "hsl(var(--destructive) / 0.8)" }}
             />
             Отход
           </div>
