@@ -235,7 +235,7 @@ export function calculate(
   const edge_waste_mm = material_width_mm - useful_width_mm;
   const waste_per_side_mm = edge_waste_mm > 0 ? edge_waste_mm / 2 : 0;
   
-  const inner_waste_mm = Math.max(0, useful_width_mm - (main_count * roll_width_mm + (additional_width || 0)));
+  const inner_waste_mm = Math.max(0, useful_width_mm - useful_width_sum_mm);
 
   return {
     material_width_mm,

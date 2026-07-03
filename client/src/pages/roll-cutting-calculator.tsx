@@ -574,8 +574,8 @@ export default function RollCuttingCalculatorPage() {
                       <span className="font-medium">{plan.waste_per_side_mm.toFixed(1)} мм</span>
                     </div>
                     <div className="flex justify-between border-b border-border/50 pb-1">
-                      <span className="text-muted-foreground">Отход на кромки (всего):</span>
-                      <span className="font-medium">{(plan.waste_per_side_mm * 2).toFixed(1)} мм</span>
+                      <span className="text-muted-foreground">Внутренний отход (ролик):</span>
+                      <span className="font-medium">{plan.inner_waste_mm.toFixed(1)} мм</span>
                     </div>
                     <div className="flex justify-between border-b border-border/50 pb-1">
                       <span className="text-muted-foreground">Циклов (прогонов):</span>
