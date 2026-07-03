@@ -135,42 +135,65 @@ function Scheme({ plan }: { plan: CalcResult }) {
         data-testid="viz-scheme"
       >
         <div className="absolute inset-0 noise" />
-        <div className="relative flex h-16 w-full overflow-hidden rounded-xl bg-muted">
-          {pieces.map((p, idx) => {
-            const pct = (p.width / material_width_mm) * 100;
-            const bg =
-              p.kind === "primary"
-                ? stripColor(idx)
-                : p.kind === "secondary"
-                  ? "hsl(188 86% 40%)"
-                  : "hsl(230 10% 70% / .35)";
+        <div className="relative flex h-24 w-full rounded-xl bg-muted/40 p-1">
+          {(() => {
+            let rollIndex = 0;
+            return pieces.map((p, idx) => {
+              const pct = (p.width / material_width_mm) * 100;
+              const isRoll = p.kind === "primary" || p.kind === "secondary";
+              
+              let isTop = true;
+              if (isRoll) {
+                isTop = rollIndex % 2 === 0;
+                rollIndex++;
+              }
 
-            return (
-              <div
-                key={`${p.kind}-${idx}`}
-                className={cn(
-                  "relative flex h-full items-end justify-center border-r last:border-r-0",
-                  p.kind.includes("waste") ? "text-muted-foreground" : "text-white",
-                )}
-                style={{ width: `${pct}%`, background: bg }}
-                data-testid={`strip-${p.kind}-${idx}`}
-                title={p.label}
-              >
+              const bg =
+                p.kind === "primary"
+                  ? stripColor(idx)
+                  : p.kind === "secondary"
+                    ? "hsl(188 86% 40%)"
+                    : "hsl(230 10% 70% / .35)";
+
+              return (
                 <div
-                  className={cn(
-                    "px-1 pb-1 text-[11px] leading-none transition-opacity",
-                    pct < 6 ? "opacity-0" : "opacity-100",
-                  )}
-                  data-testid={`text-strip-label-${idx}`}
+                  key={`${p.kind}-${idx}`}
+                  className="relative flex flex-col h-full justify-center"
+                  style={{ width: `${pct}%` }}
+                  title={p.label}
+                  data-testid={`strip-${p.kind}-${idx}`}
                 >
-                  {p.label}
+                  {isRoll ? (
+                    <div 
+                      className={cn(
+                        "absolute w-full h-[48%] flex items-center justify-center text-white border border-background/20 rounded-[4px] shadow-sm overflow-hidden",
+                        isTop ? "top-0" : "bottom-0"
+                      )}
+                      style={{ background: bg }}
+                    >
+                      <div className={cn("px-0.5 text-[10px] sm:text-[11px] font-medium leading-none text-center truncate", pct < 6 && "opacity-0")} data-testid={`text-strip-label-${idx}`}>
+                        {p.label}
+                      </div>
+                    </div>
+                  ) : (
+                    <div 
+                      className="w-full h-full flex items-center justify-center text-muted-foreground opacity-50 border-x border-background/10 overflow-hidden"
+                      style={{ background: bg }}
+                    >
+                      {pct > 5 && (
+                        <div className="text-[9px] leading-none text-center rotate-[-90deg] whitespace-nowrap">
+                          {p.label}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
-              </div>
-            );
-          })}
+              );
+            });
+          })()}
         </div>
 
-        <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
+        <div className="mt-3 grid grid-cols-3 gap-2 text-xs relative">
           <div className="flex items-center gap-2" data-testid="legend-primary">
             <span
               className="h-2.5 w-2.5 rounded-full"
