@@ -108,6 +108,7 @@ export type CalcResult = {
   waste_area_m2: number;
   waste_percent: number;
   waste_per_side_mm: number;
+  inner_waste_mm: number;
   remaining_jumbo_m: number;
   shortage_cycles: number;
   shortage_length_m: number;
@@ -233,6 +234,8 @@ export function calculate(
 
   const edge_waste_mm = material_width_mm - useful_width_mm;
   const waste_per_side_mm = edge_waste_mm > 0 ? edge_waste_mm / 2 : 0;
+  
+  const inner_waste_mm = Math.max(0, useful_width_mm - (main_count * roll_width_mm + (additional_width || 0)));
 
   return {
     material_width_mm,
@@ -266,6 +269,7 @@ export function calculate(
     waste_area_m2: Math.round(waste_area_m2 * 10) / 10,
     waste_percent: Math.round(waste_percent * 10) / 10,
     waste_per_side_mm,
+    inner_waste_mm: Math.round(inner_waste_mm * 10) / 10,
     remaining_jumbo_m,
     shortage_cycles,
     shortage_length_m,

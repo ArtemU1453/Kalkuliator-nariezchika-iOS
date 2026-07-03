@@ -69,6 +69,7 @@ function Scheme({ plan }: { plan: CalcResult }) {
     roll_width_mm,
     additional_width_mm,
     waste_per_side_mm,
+    inner_waste_mm,
   } = plan;
 
   const pieces: Array<{ label: string; width: number; kind: string }> = [];
@@ -97,7 +98,7 @@ function Scheme({ plan }: { plan: CalcResult }) {
     });
   }
   
-  const innerWaste = useful_width_mm - (main_count * roll_width_mm + (additional_width_mm || 0));
+  const innerWaste = inner_waste_mm;
   if (innerWaste > 0.01) {
     pieces.push({
       label: formatMm(innerWaste),
@@ -153,7 +154,7 @@ function Scheme({ plan }: { plan: CalcResult }) {
                   ? "hsl(var(--muted-foreground))"
                   : p.kind === "secondary"
                     ? "hsl(var(--primary))"
-                    : p.kind === "waste" ? "hsl(var(--destructive) / 0.8)" : "hsl(var(--destructive) / 0.4)";
+                    : p.kind === "waste" ? "hsl(var(--destructive) / 0.8)" : p.kind === "inner-waste" ? "hsl(var(--destructive) / 0.4)" : "hsl(var(--destructive) / 0.4)";
 
               return (
                 <div
