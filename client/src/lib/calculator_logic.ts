@@ -112,6 +112,7 @@ export type CalcResult = {
   remaining_jumbo_m: number;
   shortage_cycles: number;
   shortage_length_m: number;
+  optimal_additional_rolls?: Array<{ width: number; count: number }> | null;
 };
 
 export function calculate(
@@ -238,6 +239,44 @@ export function calculate(
   
   const inner_waste_mm = 0; // Внутренний отход поглощается кромками при центровке
 
+  // Расчет оптимальных дополнительных рулонов, если отход больше 7%
+  let optimal_additional_rolls: Array<{ width: number; count: number }> | null = null;
+  if (waste_percent > 7 && !additional_width_override) {
+    optimal_additional_rolls = [];
+    const min_roll_width = RANGE_ROLL_WIDTH[0];
+    const max_roll_width = RANGE_ROLL_WIDTH[1];
+    
+    // Пытаемся заполнить оставшуюся ширину (total_waste_width_mm)
+    // Оставляем минимальный обязательный отход на кромки (например, по 5 мм с каждой стороны, итого 10 мм)
+    const MIN_EDGE_WASTE_TOTAL = 10; 
+    let available_width_for_extra = total_waste_width_mm - MIN_EDGE_WASTE_TOTAL;
+    
+    if (available_width_for_extra >= min_roll_width) {
+      // Ищем оптимальный набор дополнительных роликов, максимум 6 штук
+      // Для простоты подбираем ролики одинаковой ширины, которые максимизируют использование остатка
+      
+      let best_waste = available_width_for_extra;
+      let best_count = 0;
+      let best_width = 0;
+      
+      for (let count = 1; count <= 6; count++) {
+        const potential_width = Math.floor(available_width_for_extra / count);
+        if (potential_width >= min_roll_width && potential_width <= max_roll_width) {
+          const waste = available_width_for_extra - (potential_width * count);
+          if (waste < best_waste) {
+            best_waste = waste;
+            best_count = count;
+            best_width = potential_width;
+          }
+        }
+      }
+      
+      if (best_count > 0 && best_width > 0) {
+        optimal_additional_rolls.push({ width: best_width, count: best_count });
+      }
+    }
+  }
+
   return {
     material_width_mm,
     useful_width_mm,
@@ -274,5 +313,6 @@ export function calculate(
     remaining_jumbo_m,
     shortage_cycles,
     shortage_length_m,
+    optimal_additional_rolls,
   };
 }

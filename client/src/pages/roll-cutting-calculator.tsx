@@ -24,6 +24,7 @@ import {
   Layers,
   LayoutGrid,
   Sparkles,
+  Lightbulb,
 } from "lucide-react";
 import { calculate, CalcResult } from "@/lib/calculator_logic";
 
@@ -502,7 +503,7 @@ export default function RollCuttingCalculatorPage() {
                 {plan ? (
                   <Badge
                     variant="secondary"
-                    className={cn("rounded-full", plan.waste_percent > 15 ? "bg-destructive/10 text-destructive border-destructive/20" : "")}
+                    className={cn("rounded-full", plan.waste_percent > 7 ? "bg-destructive/10 text-destructive border-destructive/20" : "")}
                   >
                     Отход: {plan.waste_percent.toFixed(1)}%
                   </Badge>
@@ -553,6 +554,24 @@ export default function RollCuttingCalculatorPage() {
                   </div>
                   
                   <div className="space-y-2 text-sm">
+                    {plan.optimal_additional_rolls && plan.optimal_additional_rolls.length > 0 && (
+                      <div className="mb-4 rounded-xl bg-orange-50/50 dark:bg-orange-900/10 border border-orange-200/50 dark:border-orange-800/30 p-3">
+                        <div className="flex items-start gap-2">
+                          <Lightbulb className="w-4 h-4 text-orange-500 mt-0.5" />
+                          <div>
+                            <div className="font-medium text-orange-700 dark:text-orange-400">Оптимизация отхода</div>
+                            <div className="text-orange-600/80 dark:text-orange-400/80 mt-1">
+                              Отход более 7%. Рекомендуемый доп. размер:{" "}
+                              <span className="font-bold cursor-pointer underline decoration-dotted" onClick={() => form.setValue("additionalWidthMm", plan.optimal_additional_rolls![0].width)}>
+                                {plan.optimal_additional_rolls[0].width} мм
+                              </span>{" "}
+                              ({plan.optimal_additional_rolls[0].count} шт.)
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    
                     <div className="flex justify-between border-b border-border/50 pb-1">
                       <span className="text-muted-foreground">Всего рулонов осн.:</span>
                       <span className="font-medium">{plan.total_main_rolls} шт.</span>
