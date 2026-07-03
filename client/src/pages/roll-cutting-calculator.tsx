@@ -70,6 +70,7 @@ function Scheme({ plan }: { plan: CalcResult }) {
     additional_width_mm,
     waste_per_side_mm,
     inner_waste_mm,
+    remaining_width_mm,
   } = plan;
 
   const pieces: Array<{ label: string; width: number; kind: string }> = [];
@@ -98,7 +99,7 @@ function Scheme({ plan }: { plan: CalcResult }) {
     });
   }
   
-  const innerWaste = inner_waste_mm;
+  const innerWaste = remaining_width_mm - (additional_width_mm || 0);
   if (innerWaste > 0.01) {
     pieces.push({
       label: formatMm(innerWaste),
@@ -573,10 +574,12 @@ export default function RollCuttingCalculatorPage() {
                       <span className="text-muted-foreground">Отход на кромки (с 1 стороны):</span>
                       <span className="font-medium">{plan.waste_per_side_mm.toFixed(1)} мм</span>
                     </div>
-                    <div className="flex justify-between border-b border-border/50 pb-1">
-                      <span className="text-muted-foreground">Внутренний отход (ролик):</span>
-                      <span className="font-medium">{plan.inner_waste_mm.toFixed(1)} мм</span>
-                    </div>
+                    {plan.remaining_width_mm > 0 && plan.additional_width_mm !== null && plan.remaining_width_mm !== plan.additional_width_mm && (
+                      <div className="flex justify-between border-b border-border/50 pb-1">
+                        <span className="text-muted-foreground">Внутренний отход (ОТХ):</span>
+                        <span className="font-medium">{(plan.remaining_width_mm - plan.additional_width_mm).toFixed(1)} мм</span>
+                      </div>
+                    )}
                     <div className="flex justify-between border-b border-border/50 pb-1">
                       <span className="text-muted-foreground">Циклов (прогонов):</span>
                       <span className="font-medium">{plan.cycles_used}</span>
