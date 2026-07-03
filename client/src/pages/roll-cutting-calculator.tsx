@@ -15,210 +15,118 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import {
   Info,
   Scissors,
-  Ruler,
   Layers,
   LayoutGrid,
   Sparkles,
 } from "lucide-react";
+import { calculate, CalcResult } from "@/lib/calculator_logic";
 
-const ALLOWED_TARGET_WIDTHS_MM = [
-  500, 510, 520, 530, 540, 550, 560, 570, 580, 590, 600, 610, 620, 630, 640,
-  650, 660, 670, 680, 690, 700, 710, 720, 730, 740, 750, 760, 770, 780, 790,
-  800, 810, 820, 830, 840, 850, 860, 870, 880, 890,
-] as const;
-
-const schema = z
-  .object({
-    materialWidthMm: z
-      .coerce
-      .number()
-      .min(500, "Минимум 500")
-      .max(910, "Максимум 910"),
-    usefulWidthMm: z
-      .coerce
-      .number()
-      .min(500, "Минимум 500")
-      .max(890, "Максимум 890"),
-    rollLengthM: z.coerce.number().positive("Введите длину рулона"),
-    targetWidthMm: z.coerce.number(),
-    requiredRolls: z
-      .union([z.coerce.number().int().positive(), z.literal("")])
-      .optional()
-      .transform((v) => (v === "" ? undefined : (v as number | undefined))),
-  })
-  .superRefine((val, ctx) => {
-    if (val.usefulWidthMm > val.materialWidthMm) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Полезная ширина не может быть больше ширины материала",
-        path: ["usefulWidthMm"],
-      });
-    }
-
-    const allowed = new Set<number>(ALLOWED_TARGET_WIDTHS_MM as unknown as number[]);
-    if (!allowed.has(val.targetWidthMm)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Выберите ширину из списка",
-        path: ["targetWidthMm"],
-      });
-    }
-  });
+const schema = z.object({
+  materialWidthMm: z.coerce.number().min(550).max(910),
+  usefulWidthMm: z.coerce.number().min(550).max(910),
+  rollWidthMm: z.coerce.number().min(20).max(310),
+  rollLengthM: z.coerce.number().min(30).max(1100),
+  bigRollLengthM: z.coerce.number().min(30).max(22000),
+  orderRolls: z.coerce.number().int().positive().min(1),
+  additionalWidthMm: z
+    .union([z.coerce.number().min(20).max(310), z.literal("")])
+    .optional()
+    .transform((v) => (v === "" ? undefined : (v as number | undefined))),
+}).superRefine((val, ctx) => {
+  if (val.usefulWidthMm > val.materialWidthMm) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Полезная ширина не может быть больше ширины материала",
+      path: ["usefulWidthMm"],
+    });
+  }
+  if (val.bigRollLengthM < val.rollLengthM) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Намотка Джамба должна быть не меньше длины рулона.",
+      path: ["bigRollLengthM"],
+    });
+  }
+});
 
 type FormValues = z.infer<typeof schema>;
 
-type LayoutPlan = {
-  primaryWidthMm: number;
-  primaryCountPerRun: number;
-  secondaryWidthMm?: number;
-  secondaryCountPerRun: number;
-  usedWidthMm: number;
-  edgeWasteEachMm: number;
-  wastePerRunMm: number;
-  runs: number;
-  outputRolls: number;
-  stockRolls: number;
-  materialAreaM2: number;
-  usefulAreaM2: number;
-  wasteAreaM2: number;
-};
-
-function round2(n: number) {
-  return Math.round(n * 100) / 100;
-}
-
-function bestPlan(
-  usefulWidthMm: number,
-  materialWidthMm: number,
-  rollLengthM: number,
-  primaryWidthMm: number,
-  requiredRolls?: number,
-): LayoutPlan {
-  const primaryCountPerRun = Math.max(1, Math.floor(usefulWidthMm / primaryWidthMm));
-  const usedPrimary = primaryCountPerRun * primaryWidthMm;
-  const remaining = Math.max(0, usefulWidthMm - usedPrimary);
-
-  let bestSecondaryWidth: number | undefined = undefined;
-  let bestSecondaryCount = 0;
-  let bestUsed = usedPrimary;
-
-  const allowed = ALLOWED_TARGET_WIDTHS_MM as unknown as number[];
-  for (const w2 of allowed) {
-    if (w2 === primaryWidthMm) continue;
-    const c2 = Math.floor(remaining / w2);
-    if (c2 <= 0) continue;
-    const used = usedPrimary + c2 * w2;
-    if (used > bestUsed) {
-      bestUsed = used;
-      bestSecondaryWidth = w2;
-      bestSecondaryCount = c2;
-    }
-  }
-
-  const usedWidthMm = bestUsed;
-  const wastePerRunMm = Math.max(0, usefulWidthMm - usedWidthMm);
-  const edgeWasteEachMm = wastePerRunMm / 2;
-
-  const outputRollsPerRun = primaryCountPerRun + bestSecondaryCount;
-  const required = requiredRolls ?? outputRollsPerRun;
-  const runs = Math.max(1, Math.ceil(required / outputRollsPerRun));
-
-  const outputRolls = runs * outputRollsPerRun;
-  const stockRolls = runs;
-
-  const materialAreaM2 = (materialWidthMm / 1000) * rollLengthM * stockRolls;
-  const usefulAreaM2 = (usedWidthMm / 1000) * rollLengthM * stockRolls;
-  const wasteAreaM2 = Math.max(0, materialAreaM2 - usefulAreaM2);
-
-  return {
-    primaryWidthMm,
-    primaryCountPerRun,
-    secondaryWidthMm: bestSecondaryWidth,
-    secondaryCountPerRun: bestSecondaryCount,
-    usedWidthMm,
-    edgeWasteEachMm,
-    wastePerRunMm,
-    runs,
-    outputRolls,
-    stockRolls,
-    materialAreaM2: round2(materialAreaM2),
-    usefulAreaM2: round2(usefulAreaM2),
-    wasteAreaM2: round2(wasteAreaM2),
-  };
-}
-
 function formatMm(n: number) {
-  return `${Math.round(n)} mm`;
+  return `${Number.isInteger(n) ? n : n.toFixed(1)} мм`;
 }
 
-function stripColor(i: number) {
-  const hues = [210, 188, 260, 142, 22, 320];
-  const h = hues[i % hues.length];
-  return `hsl(${h} 80% 55%)`;
-}
+function Scheme({ plan }: { plan: CalcResult }) {
+  const {
+    material_width_mm,
+    useful_width_mm,
+    main_count,
+    roll_width_mm,
+    additional_width_mm,
+    waste_per_side_mm,
+  } = plan;
 
-function Scheme({
-  usefulWidthMm,
-  plan,
-}: {
-  usefulWidthMm: number;
-  plan: LayoutPlan;
-}) {
   const pieces: Array<{ label: string; width: number; kind: string }> = [];
 
-  if (plan.edgeWasteEachMm > 0.01) {
+  if (waste_per_side_mm > 0.01) {
     pieces.push({
-      label: formatMm(plan.edgeWasteEachMm),
-      width: plan.edgeWasteEachMm,
+      label: formatMm(waste_per_side_mm),
+      width: waste_per_side_mm,
       kind: "waste",
     });
   }
 
-  for (let i = 0; i < plan.primaryCountPerRun; i++) {
+  for (let i = 0; i < main_count; i++) {
     pieces.push({
-      label: formatMm(plan.primaryWidthMm),
-      width: plan.primaryWidthMm,
+      label: formatMm(roll_width_mm),
+      width: roll_width_mm,
       kind: "primary",
     });
   }
 
-  for (let i = 0; i < plan.secondaryCountPerRun; i++) {
+  if (additional_width_mm && additional_width_mm > 0) {
     pieces.push({
-      label: formatMm(plan.secondaryWidthMm ?? 0),
-      width: plan.secondaryWidthMm ?? 0,
+      label: formatMm(additional_width_mm),
+      width: additional_width_mm,
       kind: "secondary",
     });
   }
-
-  if (plan.edgeWasteEachMm > 0.01) {
+  
+  const innerWaste = useful_width_mm - (main_count * roll_width_mm + (additional_width_mm || 0));
+  if (innerWaste > 0.01) {
     pieces.push({
-      label: formatMm(plan.edgeWasteEachMm),
-      width: plan.edgeWasteEachMm,
+      label: formatMm(innerWaste),
+      width: innerWaste,
+      kind: "inner-waste",
+    });
+  }
+
+  if (waste_per_side_mm > 0.01) {
+    pieces.push({
+      label: formatMm(waste_per_side_mm),
+      width: waste_per_side_mm,
       kind: "waste",
     });
   }
+
+  const stripColor = (i: number) => {
+    const hues = [210, 188, 260, 142, 22, 320];
+    return `hsl(${hues[i % hues.length]} 80% 55%)`;
+  };
 
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <div className="text-sm font-medium" data-testid="text-scheme-title">
-          Схема раскроя (по полезной ширине)
+          Схема раскроя
         </div>
         <div className="text-xs text-muted-foreground" data-testid="text-scheme-width">
-          Полезная ширина: {Math.round(usefulWidthMm)} мм
+          Общая: {material_width_mm} мм
         </div>
       </div>
 
@@ -229,8 +137,7 @@ function Scheme({
         <div className="absolute inset-0 noise" />
         <div className="relative flex h-16 w-full overflow-hidden rounded-xl bg-muted">
           {pieces.map((p, idx) => {
-            const pct = (p.width / usefulWidthMm) * 100;
-            const isWaste = p.kind === "waste";
+            const pct = (p.width / material_width_mm) * 100;
             const bg =
               p.kind === "primary"
                 ? stripColor(idx)
@@ -243,7 +150,7 @@ function Scheme({
                 key={`${p.kind}-${idx}`}
                 className={cn(
                   "relative flex h-full items-end justify-center border-r last:border-r-0",
-                  isWaste ? "text-muted-foreground" : "text-white",
+                  p.kind.includes("waste") ? "text-muted-foreground" : "text-white",
                 )}
                 style={{ width: `${pct}%`, background: bg }}
                 data-testid={`strip-${p.kind}-${idx}`}
@@ -252,7 +159,7 @@ function Scheme({
                 <div
                   className={cn(
                     "px-1 pb-1 text-[11px] leading-none transition-opacity",
-                    pct < 10 ? "opacity-0" : "opacity-100",
+                    pct < 6 ? "opacity-0" : "opacity-100",
                   )}
                   data-testid={`text-strip-label-${idx}`}
                 >
@@ -269,21 +176,21 @@ function Scheme({
               className="h-2.5 w-2.5 rounded-full"
               style={{ background: stripColor(0) }}
             />
-            Основная ширина
+            Основная
           </div>
           <div className="flex items-center gap-2" data-testid="legend-secondary">
             <span
               className="h-2.5 w-2.5 rounded-full"
               style={{ background: "hsl(188 86% 40%)" }}
             />
-            Доп. ширина
+            Доп.
           </div>
           <div className="flex items-center gap-2" data-testid="legend-waste">
             <span
               className="h-2.5 w-2.5 rounded-full"
               style={{ background: "hsl(230 10% 70% / .35)" }}
             />
-            Кромка/отход
+            Отход
           </div>
         </div>
       </div>
@@ -297,25 +204,34 @@ export default function RollCuttingCalculatorPage() {
     defaultValues: {
       materialWidthMm: 910,
       usefulWidthMm: 890,
-      rollLengthM: 1000,
-      targetWidthMm: 700,
-      requiredRolls: undefined,
+      rollWidthMm: 57,
+      rollLengthM: 400,
+      bigRollLengthM: 10000,
+      orderRolls: 50,
+      additionalWidthMm: undefined,
     },
     mode: "onChange",
   });
 
   const values = form.watch();
 
-  const plan = useMemo(() => {
+  const { plan, errorMsg } = useMemo<{plan: CalcResult | null, errorMsg: string | null}>(() => {
     const parsed = schema.safeParse(values);
-    if (!parsed.success) return null;
-    return bestPlan(
-      parsed.data.usefulWidthMm,
-      parsed.data.materialWidthMm,
-      parsed.data.rollLengthM,
-      parsed.data.targetWidthMm,
-      parsed.data.requiredRolls,
-    );
+    if (!parsed.success) return { plan: null, errorMsg: null };
+    try {
+      const res = calculate(
+        parsed.data.materialWidthMm,
+        parsed.data.usefulWidthMm,
+        parsed.data.rollWidthMm,
+        parsed.data.rollLengthM,
+        parsed.data.bigRollLengthM,
+        parsed.data.orderRolls,
+        parsed.data.additionalWidthMm ?? null
+      );
+      return { plan: res, errorMsg: null };
+    } catch (e: any) {
+      return { plan: null, errorMsg: e.message };
+    }
   }, [values]);
 
   const [dark, setDark] = useState(false);
@@ -323,17 +239,17 @@ export default function RollCuttingCalculatorPage() {
     document.documentElement.classList.toggle("dark", dark);
   }, [dark]);
 
-  const title = "Калькулятор раскроя рулона";
+  const title = "Калькулятор Джамба";
 
   return (
     <div className="min-h-dvh bg-[radial-gradient(1200px_700px_at_30%_-10%,rgba(37,99,235,.18),transparent_60%),radial-gradient(900px_600px_at_110%_10%,rgba(20,184,166,.14),transparent_55%),linear-gradient(to_bottom,rgba(255,255,255,0.9),rgba(255,255,255,0.85))] dark:bg-[radial-gradient(1200px_700px_at_30%_-10%,rgba(37,99,235,.22),transparent_60%),radial-gradient(900px_600px_at_110%_10%,rgba(20,184,166,.12),transparent_55%),linear-gradient(to_bottom,rgba(2,6,23,0.9),rgba(2,6,23,0.95))]">
       <div className="app-safe mx-auto w-full max-w-[430px]">
-        <header className="pt-4">
+        <header className="pt-4 px-4">
           <div className="flex items-start justify-between gap-3">
             <div>
               <div className="inline-flex items-center gap-2 rounded-full border bg-card/70 px-3 py-1 text-xs text-muted-foreground glass">
                 <Sparkles className="h-3.5 w-3.5" />
-                Offline • client-side
+                iOS style
               </div>
               <h1
                 className="mt-3 font-[Space_Grotesk,DM\ Sans,ui-sans-serif] text-2xl font-semibold tracking-tight"
@@ -341,12 +257,6 @@ export default function RollCuttingCalculatorPage() {
               >
                 {title}
               </h1>
-              <p
-                className="mt-1 text-sm text-muted-foreground"
-                data-testid="text-app-subtitle"
-              >
-                Оптимальный раскрой по полезной ширине, с симметричными кромками.
-              </p>
             </div>
 
             <Button
@@ -361,7 +271,7 @@ export default function RollCuttingCalculatorPage() {
           </div>
         </header>
 
-        <main className="pb-8 pt-4">
+        <main className="pb-8 pt-4 px-4">
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -378,10 +288,7 @@ export default function RollCuttingCalculatorPage() {
                 </div>
                 <div>
                   <div className="text-sm font-semibold" data-testid="text-form-title">
-                    Входные данные
-                  </div>
-                  <div className="text-xs text-muted-foreground" data-testid="text-form-hint">
-                    Все расчёты выполняются на устройстве.
+                    Параметры материала
                   </div>
                 </div>
               </div>
@@ -389,7 +296,7 @@ export default function RollCuttingCalculatorPage() {
               <Separator className="my-4" />
 
               <Form {...form}>
-                <form className="space-y-3" data-testid="form-inputs">
+                <form className="space-y-4" data-testid="form-inputs">
                   <div className="grid grid-cols-2 gap-3">
                     <FormField
                       control={form.control}
@@ -397,20 +304,17 @@ export default function RollCuttingCalculatorPage() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel data-testid="label-material-width">
-                            Ширина материала, мм
+                            Ширина, мм
                           </FormLabel>
                           <FormControl>
                             <Input
                               {...field}
                               inputMode="numeric"
                               type="number"
-                              min={500}
-                              max={910}
                               className="rounded-2xl"
                               data-testid="input-material-width"
                             />
                           </FormControl>
-                          <FormDescription>500–910 мм</FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -422,76 +326,109 @@ export default function RollCuttingCalculatorPage() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel data-testid="label-useful-width">
-                            Полезная ширина, мм
+                            Полезная, мм
                           </FormLabel>
                           <FormControl>
                             <Input
                               {...field}
                               inputMode="numeric"
                               type="number"
-                              min={500}
-                              max={890}
                               className="rounded-2xl"
                               data-testid="input-useful-width"
                             />
                           </FormControl>
-                          <FormDescription>500–890 мм</FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-3">
+                    <FormField
+                      control={form.control}
+                      name="bigRollLengthM"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel data-testid="label-big-roll">
+                            Намотка Джамба, м
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              inputMode="numeric"
+                              type="number"
+                              className="rounded-2xl"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="orderRolls"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel data-testid="label-order">
+                            Заказ, шт
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              inputMode="numeric"
+                              type="number"
+                              className="rounded-2xl"
+                            />
+                          </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
                   </div>
 
+                  <Separator className="my-2" />
+                  
+                  <div className="text-sm font-semibold">Размер готового рулона</div>
+                  
                   <div className="grid grid-cols-2 gap-3">
                     <FormField
                       control={form.control}
-                      name="rollLengthM"
+                      name="rollWidthMm"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel data-testid="label-roll-length">
-                            Длина рулона, м
+                          <FormLabel data-testid="label-roll-width">
+                            Ширина, мм
                           </FormLabel>
                           <FormControl>
                             <Input
                               {...field}
                               inputMode="decimal"
                               type="number"
-                              min={0}
-                              step="0.01"
+                              step="0.1"
                               className="rounded-2xl"
-                              data-testid="input-roll-length"
                             />
                           </FormControl>
-                          <FormDescription>Например: 1000</FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-
                     <FormField
                       control={form.control}
-                      name="requiredRolls"
+                      name="rollLengthM"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel data-testid="label-required-rolls">
-                            Требуемо, шт (опц.)
+                          <FormLabel data-testid="label-roll-length">
+                            Длина, м
                           </FormLabel>
                           <FormControl>
                             <Input
                               {...field}
-                              value={field.value ?? ""}
                               inputMode="numeric"
                               type="number"
-                              min={1}
-                              step={1}
-                              placeholder="например 24"
                               className="rounded-2xl"
-                              data-testid="input-required-rolls"
                             />
                           </FormControl>
-                          <FormDescription>
-                            Если пусто — считаем 1 прогон
-                          </FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -500,64 +437,28 @@ export default function RollCuttingCalculatorPage() {
 
                   <FormField
                     control={form.control}
-                    name="targetWidthMm"
+                    name="additionalWidthMm"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel data-testid="label-target-width">
-                          Целевая ширина рулона, мм
+                        <FormLabel data-testid="label-add-width">
+                          Фиксированный доп. размер (опц.), мм
                         </FormLabel>
-                        <Select
-                          onValueChange={(v) => field.onChange(Number(v))}
-                          defaultValue={String(field.value)}
-                        >
-                          <FormControl>
-                            <SelectTrigger
-                              className="rounded-2xl"
-                              data-testid="select-target-width"
-                            >
-                              <SelectValue placeholder="выберите" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent data-testid="select-content-target-width">
-                            {(ALLOWED_TARGET_WIDTHS_MM as unknown as number[]).map((w) => (
-                              <SelectItem
-                                key={w}
-                                value={String(w)}
-                                data-testid={`option-target-width-${w}`}
-                              >
-                                {w} мм
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormDescription>
-                          Можно добавить максимум одну доп. ширину для уменьшения отходов.
-                        </FormDescription>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            value={field.value ?? ""}
+                            inputMode="decimal"
+                            type="number"
+                            step="0.1"
+                            className="rounded-2xl"
+                            placeholder="Автоматически"
+                          />
+                        </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
 
-                  <div className="pt-2">
-                    <Button
-                      type="button"
-                      className="w-full rounded-2xl"
-                      onClick={() => form.trigger()}
-                      data-testid="button-recalculate"
-                    >
-                      Пересчитать
-                    </Button>
-                  </div>
-
-                  <div
-                    className="flex items-start gap-2 rounded-2xl border bg-muted/60 p-3 text-xs text-muted-foreground"
-                    data-testid="note-offline"
-                  >
-                    <Info className="mt-0.5 h-4 w-4" />
-                    <div>
-                      Офлайн: ничего не отправляется в интернет. Схема строится по полезной ширине.
-                    </div>
-                  </div>
                 </form>
               </Form>
             </Card>
@@ -575,148 +476,95 @@ export default function RollCuttingCalculatorPage() {
                     <div className="text-sm font-semibold" data-testid="text-results-title">
                       Результаты
                     </div>
-                    <div className="text-xs text-muted-foreground" data-testid="text-results-hint">
-                      Подбор раскладки + площади
-                    </div>
                   </div>
                 </div>
 
                 {plan ? (
                   <Badge
                     variant="secondary"
-                    className="rounded-full"
-                    data-testid="badge-waste"
+                    className={cn("rounded-full", plan.waste_percent > 15 ? "bg-destructive/10 text-destructive border-destructive/20" : "")}
                   >
-                    Отход: {Math.round(plan.wastePerRunMm)} мм
+                    Отход: {plan.waste_percent.toFixed(1)}%
                   </Badge>
                 ) : (
                   <Badge
                     variant="secondary"
-                    className="rounded-full"
-                    data-testid="badge-invalid"
+                    className="rounded-full bg-destructive/10 text-destructive border-destructive/20"
                   >
-                    Проверьте ввод
+                    Ошибка
                   </Badge>
                 )}
               </div>
 
               <Separator className="my-4" />
 
-              {plan ? (
+              {errorMsg ? (
+                <div className="text-sm text-destructive">{errorMsg}</div>
+              ) : plan ? (
                 <div className="space-y-4">
-                  <Scheme usefulWidthMm={values.usefulWidthMm || 1} plan={plan} />
+                  <Scheme plan={plan} />
 
                   <div className="grid grid-cols-2 gap-3">
-                    <div
-                      className="rounded-2xl border bg-card/70 p-3"
-                      data-testid="summary-runs"
-                    >
+                    <div className="rounded-2xl border bg-card/70 p-3">
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
                         <Layers className="h-4 w-4" />
-                        Прогоны
+                        Ручьев осн.
                       </div>
-                      <div className="mt-1 text-xl font-semibold" data-testid="text-runs">
-                        {plan.runs}
+                      <div className="mt-1 text-xl font-semibold">
+                        {plan.main_count}
                       </div>
-                      <div className="mt-1 text-xs text-muted-foreground" data-testid="text-stock-rolls">
-                        Исходных рулонов: {plan.stockRolls}
+                      <div className="mt-1 text-xs text-muted-foreground">
+                        Ширина: {plan.roll_width_mm} мм
                       </div>
                     </div>
-
-                    <div
-                      className="rounded-2xl border bg-card/70 p-3"
-                      data-testid="summary-output"
-                    >
+                    
+                    <div className="rounded-2xl border bg-card/70 p-3">
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <Ruler className="h-4 w-4" />
-                        Выход, шт
+                        <Layers className="h-4 w-4" />
+                        Ручьев доп.
                       </div>
-                      <div
-                        className="mt-1 text-xl font-semibold"
-                        data-testid="text-output-rolls"
-                      >
-                        {plan.outputRolls}
+                      <div className="mt-1 text-xl font-semibold">
+                        {plan.additional_width_mm ? 1 : 0}
                       </div>
-                      <div className="mt-1 text-xs text-muted-foreground" data-testid="text-per-run">
-                        На прогон: {plan.primaryCountPerRun + plan.secondaryCountPerRun}
-                      </div>
-                    </div>
-
-                    <div
-                      className="rounded-2xl border bg-card/70 p-3"
-                      data-testid="summary-areas"
-                    >
-                      <div className="text-xs text-muted-foreground" data-testid="text-areas-title">
-                        Площади
-                      </div>
-                      <div className="mt-2 space-y-1 text-sm">
-                        <div className="flex items-center justify-between" data-testid="row-area-material">
-                          <span className="text-muted-foreground">Материал</span>
-                          <span className="font-medium" data-testid="text-area-material">
-                            {plan.materialAreaM2} м²
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between" data-testid="row-area-useful">
-                          <span className="text-muted-foreground">Полезная</span>
-                          <span className="font-medium" data-testid="text-area-useful">
-                            {plan.usefulAreaM2} м²
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between" data-testid="row-area-waste">
-                          <span className="text-muted-foreground">Отход</span>
-                          <span className="font-medium" data-testid="text-area-waste">
-                            {plan.wasteAreaM2} м²
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div
-                      className="rounded-2xl border bg-card/70 p-3"
-                      data-testid="summary-layout"
-                    >
-                      <div className="text-xs text-muted-foreground" data-testid="text-layout-title">
-                        Раскладка (на прогон)
-                      </div>
-                      <div className="mt-2 space-y-1 text-sm">
-                        <div className="flex items-center justify-between" data-testid="row-layout-primary">
-                          <span className="text-muted-foreground">Основная</span>
-                          <span className="font-medium" data-testid="text-layout-primary">
-                            {plan.primaryCountPerRun} × {plan.primaryWidthMm} мм
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between" data-testid="row-layout-secondary">
-                          <span className="text-muted-foreground">Доп. ширина</span>
-                          <span className="font-medium" data-testid="text-layout-secondary">
-                            {plan.secondaryWidthMm
-                              ? `${plan.secondaryCountPerRun} × ${plan.secondaryWidthMm} мм`
-                              : "—"}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between" data-testid="row-layout-edge">
-                          <span className="text-muted-foreground">Кромка</span>
-                          <span className="font-medium" data-testid="text-layout-edge">
-                            {Math.round(plan.edgeWasteEachMm)} мм с каждой стороны
-                          </span>
-                        </div>
+                      <div className="mt-1 text-xs text-muted-foreground">
+                        {plan.additional_width_mm ? `Ширина: ${plan.additional_width_mm} мм` : "Нет доп. размера"}
                       </div>
                     </div>
                   </div>
-
-                  <div
-                    className="rounded-2xl border bg-muted/50 p-3 text-xs text-muted-foreground"
-                    data-testid="note-assumptions"
-                  >
-                    Подбор делает максимум одну дополнительную ширину, чтобы уменьшить отход.
-                    Отход по кромке распределён симметрично.
+                  
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between border-b border-border/50 pb-1">
+                      <span className="text-muted-foreground">Всего рулонов осн.:</span>
+                      <span className="font-medium">{plan.total_main_rolls} шт.</span>
+                    </div>
+                    <div className="flex justify-between border-b border-border/50 pb-1">
+                      <span className="text-muted-foreground">Излишек / Нехватка:</span>
+                      <span className="font-medium text-destructive">{plan.surplus_main_rolls} / {plan.shortage_rolls}</span>
+                    </div>
+                    <div className="flex justify-between border-b border-border/50 pb-1">
+                      <span className="text-muted-foreground">Доп. рулонов:</span>
+                      <span className="font-medium">{plan.total_additional_rolls} шт.</span>
+                    </div>
+                    <div className="flex justify-between border-b border-border/50 pb-1">
+                      <span className="text-muted-foreground">Циклов (прогонов):</span>
+                      <span className="font-medium">{plan.cycles_used}</span>
+                    </div>
+                    <div className="flex justify-between border-b border-border/50 pb-1">
+                      <span className="text-muted-foreground">Остаток Джамба:</span>
+                      <span className="font-medium">{plan.length_waste_m} м</span>
+                    </div>
+                    {plan.estimated_hours && (
+                      <div className="flex justify-between pt-1">
+                        <span className="text-muted-foreground">Примерное время:</span>
+                        <span className="font-medium">{plan.estimated_hours.toFixed(1)} ч.</span>
+                      </div>
+                    )}
                   </div>
+
                 </div>
               ) : (
-                <div
-                  className="rounded-2xl border bg-muted/40 p-4 text-sm text-muted-foreground"
-                  data-testid="state-invalid"
-                >
-                  Проверьте значения: полезная ширина должна быть ≤ ширины материала.
+                <div className="text-sm text-muted-foreground text-center py-4">
+                  Введите корректные данные
                 </div>
               )}
             </Card>
