@@ -232,10 +232,11 @@ export function calculate(
   const waste_area_m2 = total_area_m2 - useful_area_m2;
   const waste_percent = total_area_m2 > 0 ? (waste_area_m2 / total_area_m2) * 100 : 0;
 
-  const edge_waste_mm = material_width_mm - useful_width_mm;
-  const waste_per_side_mm = edge_waste_mm > 0 ? edge_waste_mm / 2 : 0;
+  // Истинный физический отход по кромкам (неиспользованная ширина делится пополам)
+  const total_waste_width_mm = material_width_mm - useful_width_sum_mm;
+  const waste_per_side_mm = total_waste_width_mm > 0 ? total_waste_width_mm / 2 : 0;
   
-  const inner_waste_mm = Math.max(0, useful_width_mm - useful_width_sum_mm);
+  const inner_waste_mm = 0; // Внутренний отход поглощается кромками при центровке
 
   return {
     material_width_mm,

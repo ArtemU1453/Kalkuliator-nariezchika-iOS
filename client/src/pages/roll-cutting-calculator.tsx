@@ -100,13 +100,8 @@ function Scheme({ plan }: { plan: CalcResult }) {
   }
   
   const innerWaste = remaining_width_mm - (additional_width_mm || 0);
-  if (innerWaste > 0.01) {
-    pieces.push({
-      label: formatMm(innerWaste),
-      width: innerWaste,
-      kind: "inner-waste",
-    });
-  }
+  // Внутреннего отхода не существует на схеме, всё уходит в кромки
+  // if (innerWaste > 0.01) { ... }
 
   if (waste_per_side_mm > 0.01) {
     pieces.push({
@@ -574,12 +569,6 @@ export default function RollCuttingCalculatorPage() {
                       <span className="text-muted-foreground">Отход на кромки (с 1 стороны):</span>
                       <span className="font-medium">{plan.waste_per_side_mm.toFixed(1)} мм</span>
                     </div>
-                    {plan.remaining_width_mm > 0 && plan.additional_width_mm !== null && plan.remaining_width_mm !== plan.additional_width_mm && (
-                      <div className="flex justify-between border-b border-border/50 pb-1">
-                        <span className="text-muted-foreground">Внутренний отход (ОТХ):</span>
-                        <span className="font-medium">{(plan.remaining_width_mm - plan.additional_width_mm).toFixed(1)} мм</span>
-                      </div>
-                    )}
                     <div className="flex justify-between border-b border-border/50 pb-1">
                       <span className="text-muted-foreground">Циклов (прогонов):</span>
                       <span className="font-medium">{plan.cycles_used}</span>
