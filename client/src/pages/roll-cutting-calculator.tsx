@@ -569,6 +569,14 @@ export default function RollCuttingCalculatorPage() {
                       <span className="font-medium">{plan.total_additional_rolls} шт.</span>
                     </div>
                     <div className="flex justify-between border-b border-border/50 pb-1">
+                      <span className="text-muted-foreground">Отход на кромки (с 1 стороны):</span>
+                      <span className="font-medium">{plan.waste_per_side_mm.toFixed(1)} мм</span>
+                    </div>
+                    <div className="flex justify-between border-b border-border/50 pb-1">
+                      <span className="text-muted-foreground">Отход на кромки (всего):</span>
+                      <span className="font-medium">{(plan.waste_per_side_mm * 2).toFixed(1)} мм</span>
+                    </div>
+                    <div className="flex justify-between border-b border-border/50 pb-1">
                       <span className="text-muted-foreground">Циклов (прогонов):</span>
                       <span className="font-medium">{plan.cycles_used}</span>
                     </div>
