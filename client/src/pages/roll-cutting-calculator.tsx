@@ -568,7 +568,14 @@ export default function RollCuttingCalculatorPage() {
                     {plan.estimated_hours && (
                       <div className="flex justify-between pt-1">
                         <span className="text-muted-foreground">Примерное время:</span>
-                        <span className="font-medium">{plan.estimated_hours.toFixed(1)} ч.</span>
+                        <span className="font-medium">
+                          {(() => {
+                            const totalMins = Math.round(plan.estimated_hours * 60);
+                            const h = Math.floor(totalMins / 60);
+                            const m = totalMins % 60;
+                            return `${h} ч. ${m} мин.`;
+                          })()}
+                        </span>
                       </div>
                     )}
                   </div>
