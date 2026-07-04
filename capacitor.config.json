@@ -1,0 +1,6 @@
+{
+  "appId": "com.artemu1453.kalkuliator",
+  "appName": "Kalkuliator",
+  "webDir": "www",
+  "bundledWebRuntime": false
+}
