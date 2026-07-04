@@ -234,6 +234,19 @@ export default function RollCuttingCalculatorPage() {
     mode: "onChange",
   });
 
+  const materialWidthMm = form.watch("materialWidthMm");
+
+  // Automatically update useful width when material width changes
+  // Useful width is material width - 20 (10mm edge trim on each side)
+  useEffect(() => {
+    if (materialWidthMm) {
+      form.setValue("usefulWidthMm", materialWidthMm - 20, { 
+        shouldValidate: true,
+        shouldDirty: true 
+      });
+    }
+  }, [materialWidthMm, form]);
+
   const values = form.watch();
 
   const { plan, errorMsg } = useMemo<{plan: CalcResult | null, errorMsg: string | null}>(() => {
@@ -300,7 +313,7 @@ export default function RollCuttingCalculatorPage() {
             className="space-y-4"
           >
             <Card
-              className="glass noise rounded-3xl border-card-border p-4"
+              className="glass noise rounded-3xl border-card-border p-4 bg-emerald-900/10"
               data-testid="card-form"
             >
               <div className="flex items-center gap-2">
@@ -332,7 +345,7 @@ export default function RollCuttingCalculatorPage() {
                               {...field}
                               inputMode="numeric"
                               type="number"
-                              className="rounded-2xl"
+                              className="rounded-2xl bg-emerald-950/20 border-emerald-800/30 focus-visible:ring-emerald-500/30"
                               data-testid="input-material-width"
                             />
                           </FormControl>
@@ -341,30 +354,6 @@ export default function RollCuttingCalculatorPage() {
                       )}
                     />
 
-                    <FormField
-                      control={form.control}
-                      name="usefulWidthMm"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel data-testid="label-useful-width">
-                            Полезная, мм
-                          </FormLabel>
-                          <FormControl>
-                            <Input
-                              {...field}
-                              inputMode="numeric"
-                              type="number"
-                              className="rounded-2xl"
-                              data-testid="input-useful-width"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-3">
                     <FormField
                       control={form.control}
                       name="bigRollLengthM"
@@ -378,14 +367,31 @@ export default function RollCuttingCalculatorPage() {
                               {...field}
                               inputMode="numeric"
                               type="number"
-                              className="rounded-2xl"
+                              className="rounded-2xl bg-emerald-950/20 border-emerald-800/30 focus-visible:ring-emerald-500/30"
                             />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                    
+                  </div>
+                  
+                  {/* Hidden field for useful width since we auto-calculate it but form needs it */}
+                  <div className="hidden">
+                    <FormField
+                      control={form.control}
+                      name="usefulWidthMm"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormControl>
+                            <Input {...field} type="hidden" />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-3">
                     <FormField
                       control={form.control}
                       name="orderRolls"
