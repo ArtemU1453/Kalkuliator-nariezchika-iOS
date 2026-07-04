@@ -225,8 +225,8 @@ export default function RollCuttingCalculatorPage() {
     defaultValues: {
       materialWidthMm: 910,
       usefulWidthMm: 890,
-      rollWidthMm: 57,
-      rollLengthM: 400,
+      rollWidthMm: 104,
+      rollLengthM: 300,
       bigRollLengthM: 10000,
       orderRolls: 50,
       additionalWidthMm: undefined,
