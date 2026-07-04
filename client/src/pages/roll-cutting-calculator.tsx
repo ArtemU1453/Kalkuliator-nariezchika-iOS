@@ -169,7 +169,7 @@ function Scheme({ plan }: { plan: CalcResult }) {
                       )}
                       style={{ background: bg }}
                     >
-                      <div className={cn("px-0.5 text-[10px] sm:text-[11px] font-medium leading-none text-center truncate", pct < 6 && "opacity-0")} data-testid={`text-strip-label-${idx}`}>
+                      <div className={cn("px-0.5 text-[10px] sm:text-[11px] tracking-tight font-medium leading-none text-center", pct < 6 && "opacity-0")} data-testid={`text-strip-label-${idx}`}>
                         {p.label}
                       </div>
                     </div>
