@@ -273,7 +273,7 @@ export default function RollCuttingCalculatorPage() {
     document.documentElement.classList.toggle("dark", dark);
   }, [dark]);
 
-  const title = "Калькулятор Джамба";
+  const title = "Калькулятор нарезки";
 
   return (
     <div className="min-h-dvh bg-[radial-gradient(1200px_700px_at_30%_-10%,rgba(37,99,235,.18),transparent_60%),radial-gradient(900px_600px_at_110%_10%,rgba(20,184,166,.14),transparent_55%),linear-gradient(to_bottom,rgba(255,255,255,0.9),rgba(255,255,255,0.85))] dark:bg-[radial-gradient(1200px_700px_at_30%_-10%,rgba(37,99,235,.22),transparent_60%),radial-gradient(900px_600px_at_110%_10%,rgba(20,184,166,.12),transparent_55%),linear-gradient(to_bottom,rgba(2,6,23,0.9),rgba(2,6,23,0.95))]">
@@ -281,15 +281,15 @@ export default function RollCuttingCalculatorPage() {
         <header className="pt-4 px-4">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <div className="inline-flex items-center gap-2 rounded-full border bg-card/70 px-3 py-1 text-xs text-muted-foreground glass">
-                <Sparkles className="h-3.5 w-3.5" />
-                iOS style
-              </div>
               <h1
-                className="mt-3 font-[Space_Grotesk,DM\ Sans,ui-sans-serif] text-2xl font-semibold tracking-tight"
+                className="font-[Space_Grotesk,DM\ Sans,ui-sans-serif] text-2xl font-semibold tracking-tight"
                 data-testid="text-app-title"
               >
-                {title}
+                {title.split(" ").map((word, i) => (
+                  <span key={i} className="block leading-tight">
+                    {word}
+                  </span>
+                ))}
               </h1>
             </div>
 
