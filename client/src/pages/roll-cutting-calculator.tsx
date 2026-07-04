@@ -376,6 +376,29 @@ export default function RollCuttingCalculatorPage() {
                     />
                   </div>
                   
+                  <div className="space-y-3">
+                    <FormField
+                      control={form.control}
+                      name="orderRolls"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel data-testid="label-order">
+                            Заказ, шт
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              inputMode="numeric"
+                              type="number"
+                              className="rounded-2xl bg-emerald-950/20 border-emerald-800/30 focus-visible:ring-emerald-500/30"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
                   {/* Hidden field for useful width since we auto-calculate it but form needs it */}
                   <div className="hidden">
                     <FormField
@@ -391,29 +414,6 @@ export default function RollCuttingCalculatorPage() {
                     />
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-3">
-                    <FormField
-                      control={form.control}
-                      name="orderRolls"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel data-testid="label-order">
-                            Заказ, шт
-                          </FormLabel>
-                          <FormControl>
-                            <Input
-                              {...field}
-                              inputMode="numeric"
-                              type="number"
-                              className="rounded-2xl"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
                   <Separator className="my-2" />
                   
                   <div className="text-sm font-semibold">Размер готового рулона</div>
@@ -462,29 +462,31 @@ export default function RollCuttingCalculatorPage() {
                     />
                   </div>
 
-                  <FormField
-                    control={form.control}
-                    name="additionalWidthMm"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel data-testid="label-add-width">
-                          Фиксированный доп. размер (опц.), мм
-                        </FormLabel>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            value={field.value ?? ""}
-                            inputMode="decimal"
-                            type="number"
-                            step="0.1"
-                            className="rounded-2xl"
-                            placeholder="Автоматически"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  <div className="space-y-3">
+                    <FormField
+                      control={form.control}
+                      name="additionalWidthMm"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel data-testid="label-add-width">
+                            Фиксированный доп. размер (опц.), мм
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              value={field.value ?? ""}
+                              inputMode="decimal"
+                              type="number"
+                              step="0.1"
+                              className="rounded-2xl"
+                              placeholder="Автоматически"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
 
                 </form>
               </Form>
