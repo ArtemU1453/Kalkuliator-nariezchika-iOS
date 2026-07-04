@@ -205,7 +205,8 @@ export function calculate(
     cycles_per_hour = Math.min(width_rate, length_rate);
   }
   
-  const estimated_hours = cycles_per_hour ? cycles_needed / cycles_per_hour : null;
+  // Add 15 minutes (0.25 hours) for setup and material replacement time
+  const estimated_hours = cycles_per_hour ? (cycles_needed / cycles_per_hour) + 0.25 : null;
 
   const total_main_rolls = main_count * cycles_used;
   const total_additional_rolls = additional_width ? cycles_used : 0;
