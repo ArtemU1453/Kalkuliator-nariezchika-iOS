@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+<title>Калькулятор нарезки</title>
+<meta name="description" content="Офлайн-калькулятор для оптимального раскроя рулона по полезной ширине: прогон, площади, отходы и схема." />
+
+<!-- iOS "Add to Home Screen" behaviour -->
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Нарезка" />
+<meta name="format-detection" content="telephone=no" />
+<meta name="theme-color" content="#f4f6fb" id="themeColorMeta" />
+
+<link rel="apple-touch-icon" href="apple-touch-icon.png" />
+<link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAADmElEQVR42rVWPYslRRQ95/bX9JuBHWZZRHcEA0UWEyNNBFHMxEAjwcB4MdDEQMFAjDfQH2BgsKkGCoLhgKmJGPnBsMmCs+6iM92v3+u6x6C73+vu128+QJuiqa6ue6rqnnvPLT5/+0QUKBGgRn1RILrBfv/CCW3f/ld0QfE2dNJBYf3Z/MIV0CkA8SQ6qMqyTYMEVTPtMnsHILYnGKA7KfIJP14boJ1wP35clDFcZu/NYLyxd68t/bT44I3y65JGOAAAguXy7/Ze/2j/jvVcdz66KBt5pmZ8TX+9Mv82wTxXkWvetSLR/NXy+wM9WDIC/TLoIGxIWnuakrMABkQB1rUogCVnTqil+mL0NQf9SYIMKxyhewgZmtAaeXUresvB6puNMeCw1s0dutqYRbsAHCSgrgEYL9n041EGiQA8V2ES6asTCDSIkJOBJK3nKIIyBJGbxFj/W0TE5aNo/2j2mixZWlZbumpLi2tLEi5SzFNUvTaPURVRPkypziu3Prw3OlegGcOhH/eToAmwfT387OTjWThzGtD6TGAmv3vw1uc3bucqvHeOfqKtvWSsRfwaP90fB31hyWN+/3BxvF+XNRvwZgHsON49+erL6+/Mo8wQ1rRvcrB6ZyzXIxDhhjrFfGFZxaqm9eiBTCV3SG+CUD3AeLtGsvtFEQQbCSFEeMPuKoANTnjDeS+cMCEVG2GwPsQq2CcfgV0aoQ8YT6IbgrrTd+ZOOuEOOswxcJHDMi0IFzVKiHhy76e2SzroGpI8RzbTfFdew1ckO5E6ftm99U+8m2Dpa5wpqSC8tJ23z+6+efrNAkau1BQGlVH+/uGdglnUrN3JOImfZs81nsSwWvCZT37rSYXXtBzFD/devrl4VBPWi8VIOElnLzx79Gd8kGDpQ2HIURrqzVq0KRWMtFwiObNoSfalIpbObLan08rjmEsBbdmCAAVystL1w7QpvBIIKEIIAyYZwQ0eyGAk2ChPL6an6088UfkgrPN0MxZbEddEJZ+oEAOpICTCFCLVNaMwSFcSjFUbAgaxeG7tHHMAGOvTeO9BeuPJ04dgGOzf8Ud+/e94zxAuiT6SCokgvGLy3s0vXjr7MbD1igAQEXR07cXCsgyV9y5I56BjxAEoJ1Isfk+f+jm/NTYz5V6kqDpBvhh9zEETdk6kqHa80PDCAUcwXgl9wEEvCeWEM9pifAX0NQfb7gTbjS+FjuZ2vbpH/ufoov4F74OeOmofFpYAAAAASUVORK5CYII=" />
+
+<style>
+  :root{
+    --background: 220 30% 98%;
+    --foreground: 230 25% 13%;
+    --card: 0 0% 100%;
+    --card-foreground: 230 25% 13%;
+    --card-border: 225 20% 90%;
+    --primary: 222 84% 56%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 20% 94%;
+    --secondary-foreground: 230 25% 13%;
+    --muted: 220 18% 96%;
+    --muted-foreground: 230 12% 42%;
+    --accent: 188 86% 40%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 78% 54%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 225 18% 88%;
+    --input: 225 22% 82%;
+    --ring: 222 84% 56%;
+    --radius: 16px;
+    --shadow-soft: 0 10px 25px rgba(2,6,23,.08);
+    --shadow-glow: 0 16px 50px rgba(37,99,235,.16);
+  }
+  html.dark{
+    --background: 230 22% 8%;
+    --foreground: 220 18% 96%;
+    --card: 230 20% 10%;
+    --card-foreground: 220 18% 96%;
+    --card-border: 230 14% 18%;
+    --primary: 222 84% 62%;
+    --primary-foreground: 230 22% 8%;
+    --secondary: 230 16% 14%;
+    --secondary-foreground: 220 18% 96%;
+    --muted: 230 16% 14%;
+    --muted-foreground: 220 10% 70%;
+    --accent: 188 86% 46%;
+    --accent-foreground: 230 22% 8%;
+    --destructive: 0 78% 54%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 230 14% 18%;
+    --input: 230 14% 28%;
+    --ring: 222 84% 62%;
+  }
+
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;margin:0;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:hsl(var(--background));
+    color:hsl(var(--foreground));
+    -webkit-font-smoothing:antialiased;
+    -webkit-text-size-adjust:100%;
+    min-height:100vh;
+    min-height:100dvh;
+  }
+  h1,h2,h3{margin:0;}
+  p{margin:0;}
+  button{font:inherit;}
+  input{font:inherit;}
+
+  .page-bg{
+    min-height:100vh;
+    min-height:100dvh;
+    background:
+      radial-gradient(1200px 700px at 30% -10%, rgba(37,99,235,.18), transparent 60%),
+      radial-gradient(900px 600px at 110% 10%, rgba(20,184,166,.14), transparent 55%),
+      linear-gradient(to bottom, rgba(255,255,255,0.9), rgba(255,255,255,0.85));
+    transition:background .2s ease;
+  }
+  html.dark .page-bg{
+    background:
+      radial-gradient(1200px 700px at 30% -10%, rgba(37,99,235,.22), transparent 60%),
+      radial-gradient(900px 600px at 110% 10%, rgba(20,184,166,.12), transparent 55%),
+      linear-gradient(to bottom, rgba(2,6,23,0.9), rgba(2,6,23,0.95));
+  }
+
+  .container{
+    max-width:430px;
+    margin:0 auto;
+    padding-left:max(16px, env(safe-area-inset-left));
+    padding-right:max(16px, env(safe-area-inset-right));
+    padding-top:max(18px, env(safe-area-inset-top));
+    padding-bottom:max(24px, env(safe-area-inset-bottom));
+  }
+
+  header{padding-top:4px;}
+  .header-row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;}
+  .title{font-size:26px;font-weight:700;letter-spacing:-0.01em;line-height:1.05;}
+  .title span{display:block;}
+
+  .btn{
+    appearance:none;border:none;cursor:pointer;
+    border-radius:12px;padding:10px 16px;font-size:14px;font-weight:500;
+    background:hsl(var(--secondary));color:hsl(var(--secondary-foreground));
+    flex-shrink:0; min-height:40px;
+  }
+  .btn:active{transform:scale(0.97);}
+  .btn:focus-visible{outline:2px solid hsl(var(--ring));outline-offset:2px;}
+
+  main{padding-top:16px;padding-bottom:8px;display:flex;flex-direction:column;gap:16px;}
+
+  .card{
+    position:relative;overflow:hidden;border-radius:24px;padding:16px;
+    background:linear-gradient(180deg, rgba(255,255,255,.78), rgba(255,255,255,.62));
+    -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+    border:1px solid rgba(15,23,42,0.08);
+    box-shadow:var(--shadow-soft);
+  }
+  html.dark .card{
+    background:linear-gradient(180deg, rgba(15,23,42,.55), rgba(2,6,23,.45));
+    border:1px solid rgba(148,163,184,.14);
+    box-shadow:0 14px 40px rgba(0,0,0,.45);
+  }
+  .card-form{background-image:linear-gradient(rgba(6,78,59,.07),rgba(6,78,59,.07)),linear-gradient(180deg, rgba(255,255,255,.78), rgba(255,255,255,.62));}
+  html.dark .card-form{background-image:linear-gradient(rgba(6,78,59,.14),rgba(6,78,59,.14)),linear-gradient(180deg, rgba(15,23,42,.55), rgba(2,6,23,.45));}
+
+  .card::before{
+    content:"";position:absolute;inset:0;pointer-events:none;opacity:.05;mix-blend-mode:multiply;border-radius:inherit;
+    background-image:
+      radial-gradient(circle at 10% 20%, rgba(0,0,0,.8) 0.5px, transparent 0.6px),
+      radial-gradient(circle at 80% 30%, rgba(0,0,0,.7) 0.5px, transparent 0.6px),
+      radial-gradient(circle at 40% 70%, rgba(0,0,0,.6) 0.5px, transparent 0.6px);
+    background-size:120px 120px;
+  }
+  html.dark .card::before{opacity:.09;mix-blend-mode:screen;}
+
+  .card-head{display:flex;align-items:center;gap:10px;position:relative;}
+  .card-head-between{justify-content:space-between;}
+  .card-head-left{display:flex;align-items:center;gap:10px;}
+  .icon-badge{height:36px;width:36px;border-radius:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .icon-badge svg{width:18px;height:18px;}
+  .icon-badge-primary{background:hsl(var(--primary));color:hsl(var(--primary-foreground));box-shadow:var(--shadow-glow);}
+  .icon-badge-accent{background:hsl(var(--accent));color:hsl(var(--accent-foreground));}
+  .card-title{font-size:14px;font-weight:600;}
+
+  .sep{border:none;border-top:1px solid hsl(var(--border));margin:16px 0;position:relative;}
+  .sep-sm{margin:10px 0;}
+
+  .section-label{font-size:14px;font-weight:600;margin:2px 0 12px;position:relative;}
+
+  form.form{display:flex;flex-direction:column;gap:14px;position:relative;}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .field{display:flex;flex-direction:column;gap:6px;}
+  .field label{font-size:13px;font-weight:500;color:hsl(var(--foreground));}
+  .field input{
+    width:100%;padding:11px 14px;border-radius:16px;
+    border:1px solid hsl(var(--input));background:hsl(var(--card));color:hsl(var(--foreground));
+    min-height:44px;
+  }
+  .field input.emph{background:hsla(160,84%,10%,.06);border-color:hsla(160,60%,30%,.35);}
+  html.dark .field input.emph{background:hsla(160,70%,10%,.35);border-color:hsla(160,55%,35%,.4);}
+  .field input:focus-visible{outline:2px solid hsl(var(--ring));outline-offset:1px;}
+  .field-error{font-size:12px;color:hsl(var(--destructive));min-height:14px;}
+
+  .badge{display:inline-flex;align-items:center;gap:4px;padding:5px 12px;border-radius:9999px;font-size:12px;font-weight:600;background:hsl(var(--secondary));color:hsl(var(--secondary-foreground));white-space:nowrap;}
+  .badge-danger{background:hsl(var(--destructive) / 12%);color:hsl(var(--destructive));border:1px solid hsl(var(--destructive) / 25%);}
+
+  .placeholder-msg{text-align:center;padding:20px 4px;font-size:14px;color:hsl(var(--muted-foreground));}
+  .error-msg{font-size:14px;color:hsl(var(--destructive));}
+
+  .scheme{display:flex;flex-direction:column;gap:12px;}
+  .scheme-head{display:flex;align-items:center;justify-content:space-between;}
+  .scheme-title{font-size:14px;font-weight:600;}
+  .scheme-width{font-size:12px;color:hsl(var(--muted-foreground));}
+  .scheme-viz{position:relative;overflow:hidden;border-radius:16px;border:1px solid hsl(var(--border));background:hsl(var(--card));padding:12px;}
+  .scheme-strip{position:relative;display:flex;height:96px;width:100%;border-radius:12px;background:hsl(var(--muted) / 45%);padding:4px;}
+  .piece{position:relative;height:100%;}
+  .piece-roll-inner{
+    position:absolute;width:100%;height:48%;display:flex;align-items:center;justify-content:center;
+    color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:5px;box-shadow:0 1px 3px rgba(0,0,0,.15);
+    overflow:hidden;
+  }
+  .piece-roll-inner span{padding:0 2px;font-size:10.5px;font-weight:600;letter-spacing:-0.01em;line-height:1;text-align:center;white-space:nowrap;}
+  .piece-waste-inner{
+    width:100%;height:100%;display:flex;align-items:center;justify-content:center;
+    border-left:1px solid rgba(255,255,255,.08);border-right:1px solid rgba(255,255,255,.08);overflow:hidden;
+  }
+  .piece-waste-inner span{font-size:9px;line-height:1;white-space:nowrap;transform:rotate(-90deg);color:rgba(255,255,255,.9);}
+
+  .legend{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;font-size:12px;position:relative;}
+  .legend-item{display:flex;align-items:center;gap:6px;color:hsl(var(--foreground));}
+  .legend-dot{height:10px;width:10px;border-radius:9999px;flex-shrink:0;}
+
+  .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .stat-box{border:1px solid hsl(var(--border));border-radius:16px;background:hsl(var(--card) / 70%);padding:12px;}
+  .stat-label{display:flex;align-items:center;gap:6px;font-size:12px;color:hsl(var(--muted-foreground));}
+  .stat-label svg{width:14px;height:14px;flex-shrink:0;}
+  .stat-value{margin-top:4px;font-size:20px;font-weight:600;}
+  .stat-sub{margin-top:4px;font-size:12px;color:hsl(var(--muted-foreground));}
+
+  .tip-box{margin-bottom:4px;border-radius:12px;padding:12px;background:rgba(255,247,237,.7);border:1px solid rgba(254,215,170,.6);display:flex;gap:8px;align-items:flex-start;}
+  html.dark .tip-box{background:rgba(120,53,15,.15);border:1px solid rgba(154,83,25,.35);}
+  .tip-box svg{width:16px;height:16px;color:#f97316;flex-shrink:0;margin-top:2px;}
+  .tip-title{font-weight:600;color:#c2410c;font-size:13px;}
+  html.dark .tip-title{color:#fb923c;}
+  .tip-text{color:#9a5b1f;margin-top:2px;font-size:13px;}
+  html.dark .tip-text{color:#fdba74;}
+  .tip-value{font-weight:700;text-decoration:underline;text-decoration-style:dotted;cursor:pointer;background:none;border:none;padding:0;font:inherit;color:inherit;}
+
+  .rows{display:flex;flex-direction:column;gap:8px;font-size:14px;}
+  .row{display:flex;justify-content:space-between;gap:8px;border-bottom:1px solid hsl(var(--border) / 50%);padding-bottom:6px;}
+  .row:last-child{border-bottom:none;}
+  .row .k{color:hsl(var(--muted-foreground));}
+  .row .v{font-weight:500;text-align:right;}
+  .row.danger .k{color:hsl(var(--destructive) / 85%);}
+  .row.danger .v{color:hsl(var(--destructive));}
+  .row.time{padding-top:2px;border-bottom:none;}
+
+  @media (prefers-reduced-motion: no-preference){
+    main{animation:riseIn .35s ease both;}
+  }
+  @keyframes riseIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+</style>
+</head>
+<body>
+<div class="page-bg">
+  <div class="container">
+    <header>
+      <div class="header-row">
+        <h1 class="title"><span>Калькулятор</span><span>нарезки</span></h1>
+        <button type="button" class="btn" id="themeToggle">Тёмная</button>
+      </div>
+    </header>
+
+    <main>
+      <section class="card card-form">
+        <div class="card-head">
+          <div class="icon-badge icon-badge-primary">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg>
+          </div>
+          <div class="card-title">Параметры материала</div>
+        </div>
+        <hr class="sep" />
+        <form class="form" id="calcForm" autocomplete="off">
+          <div class="grid-2">
+            <div class="field">
+              <label for="materialWidthMm">Ширина, мм</label>
+              <input class="emph" type="number" id="materialWidthMm" inputmode="numeric" value="910" />
+              <div class="field-error" id="err-materialWidthMm"></div>
+            </div>
+            <div class="field">
+              <label for="bigRollLengthM">Намотка Джамба, м</label>
+              <input class="emph" type="number" id="bigRollLengthM" inputmode="numeric" value="10000" />
+              <div class="field-error" id="err-bigRollLengthM"></div>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="orderRolls">Заказ, шт</label>
+            <input class="emph" type="number" id="orderRolls" inputmode="numeric" value="50" />
+            <div class="field-error" id="err-orderRolls"></div>
+          </div>
+
+          <hr class="sep sep-sm" />
+          <div class="section-label">Размер готового рулона</div>
+
+          <div class="grid-2">
+            <div class="field">
+              <label for="rollWidthMm">Ширина, мм</label>
+              <input type="number" id="rollWidthMm" inputmode="decimal" step="0.1" value="104" />
+              <div class="field-error" id="err-rollWidthMm"></div>
+            </div>
+            <div class="field">
+              <label for="rollLengthM">Длина, м</label>
+              <input type="number" id="rollLengthM" inputmode="numeric" value="300" />
+              <div class="field-error" id="err-rollLengthM"></div>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="additionalWidthMm">Фиксированный доп. размер (опц.), мм</label>
+            <input type="number" id="additionalWidthMm" inputmode="decimal" step="0.1" placeholder="Автоматически" />
+            <div class="field-error" id="err-additionalWidthMm"></div>
+          </div>
+        </form>
+      </section>
+
+      <section class="card card-results">
+        <div class="card-head card-head-between">
+          <div class="card-head-left">
+            <div class="icon-badge icon-badge-accent">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+            </div>
+            <div class="card-title">Результаты</div>
+          </div>
+          <div class="badge" id="wasteBadge">Отход: 0%</div>
+        </div>
+        <hr class="sep" />
+        <div id="resultsBody"></div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ================= Портированная логика расчёта (1:1 из calculator_logic.ts) ================= */
+  var MAX_BIG_ROLL_LENGTH_M = 22000;
+  var RANGE_MATERIAL_WIDTH = [550, 910];
+  var RANGE_ROLL_WIDTH = [20, 310];
+  var RANGE_ROLL_LENGTH = [30, 1100];
+  var MAX_ROLL_WIDTH_REDUCTION = 0.03;
+  var SETUP_LENGTH_M = 10;
+
+  function cyclesPerHourByWidth(rollWidthMm) {
+    if (rollWidthMm >= 25 && rollWidthMm < 45) return 11;
+    if (rollWidthMm >= 45 && rollWidthMm <= 150) return 12;
+    return null;
+  }
+
+  function cyclesPerHourByLength(rollLengthM) {
+    if (rollLengthM <= 300) return 12;
+    if (rollLengthM <= 450) return 11;
+    if (rollLengthM <= 600) return 10;
+    return 8;
+  }
+
+  function applyRollWidthAdjustment(usefulWidthMm, rollWidthMm) {
+    var mainCount = Math.floor(usefulWidthMm / rollWidthMm);
+    var remainingWidth = usefulWidthMm - mainCount * rollWidthMm;
+
+    if (remainingWidth < RANGE_ROLL_WIDTH[0] || remainingWidth > RANGE_ROLL_WIDTH[1]) {
+      return { rollWidthMm: rollWidthMm, mainCount: mainCount, remainingWidth: remainingWidth, wasAdjusted: false };
+    }
+    if (mainCount < 1) {
+      return { rollWidthMm: rollWidthMm, mainCount: mainCount, remainingWidth: remainingWidth, wasAdjusted: false };
+    }
+
+    var minWidth = rollWidthMm * (1 - MAX_ROLL_WIDTH_REDUCTION);
+    var widthNeeded = usefulWidthMm / (mainCount + 1);
+
+    if (widthNeeded >= minWidth && widthNeeded >= RANGE_ROLL_WIDTH[0] && widthNeeded <= RANGE_ROLL_WIDTH[1]) {
+      var adjustedWidth = Math.round(widthNeeded * 10) / 10;
+      if (adjustedWidth < minWidth) {
+        return { rollWidthMm: rollWidthMm, mainCount: mainCount, remainingWidth: remainingWidth, wasAdjusted: false };
+      }
+      var adjustedCount = mainCount + 1;
+      var adjustedRemaining = usefulWidthMm - adjustedCount * adjustedWidth;
+      if (Math.abs(adjustedRemaining) < 1e-6) adjustedRemaining = 0;
+      return { rollWidthMm: adjustedWidth, mainCount: adjustedCount, remainingWidth: adjustedRemaining, wasAdjusted: true };
+    }
+
+    return { rollWidthMm: rollWidthMm, mainCount: mainCount, remainingWidth: remainingWidth, wasAdjusted: false };
+  }
+
+  function validateCalcInputs(materialWidthMm, usefulWidthMm, rollWidthMm, rollLengthM, bigRollLengthM) {
+    if (materialWidthMm < RANGE_MATERIAL_WIDTH[0] || materialWidthMm > RANGE_MATERIAL_WIDTH[1]) {
+      throw new Error("Ширина материала должна быть от 550 до 910 мм.");
+    }
+    if (usefulWidthMm > materialWidthMm) {
+      throw new Error("Полезная ширина не может быть больше общей.");
+    }
+    if (rollWidthMm < RANGE_ROLL_WIDTH[0] || rollWidthMm > RANGE_ROLL_WIDTH[1]) {
+      throw new Error("Ширина рулона должна быть от 20 до 310 мм.");
+    }
+    if (rollLengthM < RANGE_ROLL_LENGTH[0] || rollLengthM > RANGE_ROLL_LENGTH[1]) {
+      throw new Error("Длина рулона должна быть от 30 до 1100 м.");
+    }
+    if (bigRollLengthM <= 0 || bigRollLengthM > MAX_BIG_ROLL_LENGTH_M) {
+      throw new Error("Намотка Джамба должна быть от 1 до 22000 м.");
+    }
+    if (bigRollLengthM < rollLengthM) {
+      throw new Error("Намотка Джамба должна быть не меньше длины рулона.");
+    }
+  }
+
+  function calculate(materialWidthMm, usefulWidthMm, rollWidthMm, rollLengthM, bigRollLengthM, orderRolls, additionalWidthMm) {
+    if (additionalWidthMm === undefined) additionalWidthMm = null;
+
+    validateCalcInputs(materialWidthMm, usefulWidthMm, rollWidthMm, rollLengthM, bigRollLengthM);
+
+    if (!orderRolls || orderRolls <= 0) {
+      throw new Error("Количество рулонов в заказе должно быть больше нуля.");
+    }
+    orderRolls = Math.floor(orderRolls);
+
+    var rollWidthInputMm = rollWidthMm;
+    var additionalWidthOverride = null;
+    if (additionalWidthMm !== null) {
+      additionalWidthOverride = Number(additionalWidthMm);
+      if (isNaN(additionalWidthOverride)) {
+        throw new Error("Некорректный доп. размер.");
+      }
+      if (additionalWidthOverride <= 0) {
+        additionalWidthOverride = null;
+      } else if (additionalWidthOverride < RANGE_ROLL_WIDTH[0] || additionalWidthOverride > RANGE_ROLL_WIDTH[1]) {
+        throw new Error("Доп. размер должен быть от 20 до 310 мм.");
+      }
+    }
+
+    var mainCount = 0;
+    var remainingWidth = 0;
+    var wasAdjusted = false;
+
+    if (additionalWidthOverride === null) {
+      var adj = applyRollWidthAdjustment(usefulWidthMm, rollWidthMm);
+      rollWidthMm = adj.rollWidthMm;
+      mainCount = adj.mainCount;
+      remainingWidth = adj.remainingWidth;
+      wasAdjusted = adj.wasAdjusted;
+    } else {
+      mainCount = Math.floor(usefulWidthMm / rollWidthMm);
+      remainingWidth = usefulWidthMm - mainCount * rollWidthMm;
+      wasAdjusted = false;
+    }
+
+    var additionalWidth = null;
+    if (additionalWidthOverride !== null) {
+      if (additionalWidthOverride - remainingWidth > 1e-6) {
+        throw new Error("Доп. размер " + additionalWidthOverride.toFixed(1) + " мм больше остатка " + remainingWidth.toFixed(1) + " мм.");
+      }
+      additionalWidth = additionalWidthOverride;
+    } else if (!wasAdjusted && remainingWidth >= RANGE_ROLL_WIDTH[0] && remainingWidth <= RANGE_ROLL_WIDTH[1]) {
+      additionalWidth = remainingWidth;
+    }
+
+    var availableLengthM = bigRollLengthM - SETUP_LENGTH_M;
+    if (availableLengthM < rollLengthM) {
+      throw new Error("Недостаточная длина большого рулона с учетом 10 м расхода.");
+    }
+
+    var lengthCount = Math.floor(availableLengthM / rollLengthM);
+    var lengthWasteM = availableLengthM - lengthCount * rollLengthM;
+
+    if (mainCount <= 0) {
+      throw new Error("Недостаточно ширины для нарезки рулонов.");
+    }
+
+    var rollsPerCycle = mainCount;
+    var cyclesNeeded = Math.ceil(orderRolls / mainCount);
+    var cyclesUsed = Math.min(cyclesNeeded, lengthCount);
+
+    var widthRate = cyclesPerHourByWidth(rollWidthMm);
+    var lengthRate = cyclesPerHourByLength(rollLengthM);
+
+    var cyclesPerHour = null;
+    if (widthRate === null) {
+      cyclesPerHour = lengthRate;
+    } else {
+      cyclesPerHour = Math.min(widthRate, lengthRate);
+    }
+
+    var estimatedHours = cyclesPerHour ? (cyclesNeeded / cyclesPerHour) + 0.25 : null;
+
+    var totalMainRolls = mainCount * cyclesUsed;
+    var totalAdditionalRolls = additionalWidth ? cyclesUsed : 0;
+    var totalRolls = totalMainRolls + totalAdditionalRolls;
+
+    var surplusMainRolls = Math.max(0, totalMainRolls - orderRolls);
+    var surplusAdditionalRolls = additionalWidth ? totalAdditionalRolls : 0;
+    var surplusRolls = surplusMainRolls + surplusAdditionalRolls;
+    var shortageRolls = Math.max(0, orderRolls - totalMainRolls);
+
+    var usedLengthM = cyclesUsed * rollLengthM + SETUP_LENGTH_M;
+
+    var remainingJumboM = Math.max(0, bigRollLengthM - usedLengthM);
+    var shortageCycles = Math.max(0, cyclesNeeded - cyclesUsed);
+    var shortageLengthM = shortageCycles * rollLengthM;
+
+    if (shortageRolls > 0) {
+      usedLengthM = bigRollLengthM;
+    }
+
+    var totalAreaM2 = (materialWidthMm / 1000) * usedLengthM;
+    var usefulWidthSumMm = mainCount * rollWidthMm + (additionalWidth || 0);
+    var usefulAreaM2 = (usefulWidthSumMm / 1000) * (cyclesUsed * rollLengthM);
+    var wasteAreaM2 = totalAreaM2 - usefulAreaM2;
+    var wastePercent = totalAreaM2 > 0 ? (wasteAreaM2 / totalAreaM2) * 100 : 0;
+
+    var totalWasteWidthMm = materialWidthMm - usefulWidthSumMm;
+    var wastePerSideMm = totalWasteWidthMm > 0 ? totalWasteWidthMm / 2 : 0;
+
+    var innerWasteMm = 0;
+
+    var optimalAdditionalRolls = null;
+    if (wastePercent > 7 && !additionalWidthOverride) {
+      optimalAdditionalRolls = [];
+      var minRollWidth = RANGE_ROLL_WIDTH[0];
+      var maxRollWidth = RANGE_ROLL_WIDTH[1];
+
+      var MIN_EDGE_WASTE_TOTAL = 10;
+      var availableWidthForExtra = totalWasteWidthMm - MIN_EDGE_WASTE_TOTAL;
+
+      if (availableWidthForExtra >= minRollWidth) {
+        var bestWaste = availableWidthForExtra;
+        var bestCount = 0;
+        var bestWidth = 0;
+
+        for (var count = 1; count <= 6; count++) {
+          var potentialWidth = Math.floor(availableWidthForExtra / count);
+          if (potentialWidth >= minRollWidth && potentialWidth <= maxRollWidth) {
+            var waste = availableWidthForExtra - potentialWidth * count;
+            if (waste < bestWaste) {
+              bestWaste = waste;
+              bestCount = count;
+              bestWidth = potentialWidth;
+            }
+          }
+        }
+
+        if (bestCount > 0 && bestWidth > 0) {
+          optimalAdditionalRolls.push({ width: bestWidth, count: bestCount });
+        }
+      }
+    }
+
+    return {
+      material_width_mm: materialWidthMm,
+      useful_width_mm: usefulWidthMm,
+      roll_width_input_mm: rollWidthInputMm,
+      roll_width_mm: rollWidthMm,
+      roll_length_m: rollLengthM,
+      big_roll_length_m: bigRollLengthM,
+      order_rolls: orderRolls,
+      main_count: mainCount,
+      remaining_width_mm: remainingWidth,
+      additional_width_mm: additionalWidth,
+      was_adjusted: wasAdjusted,
+      rolls_per_cycle: rollsPerCycle,
+      cycles_needed: cyclesNeeded,
+      cycles_used: cyclesUsed,
+      cycles_per_hour: cyclesPerHour,
+      estimated_hours: estimatedHours,
+      used_length_m: usedLengthM,
+      length_count: lengthCount,
+      length_waste_m: lengthWasteM,
+      total_main_rolls: totalMainRolls,
+      total_additional_rolls: totalAdditionalRolls,
+      total_rolls: totalRolls,
+      surplus_rolls: surplusRolls,
+      surplus_main_rolls: surplusMainRolls,
+      surplus_additional_rolls: surplusAdditionalRolls,
+      shortage_rolls: shortageRolls,
+      total_area_m2: Math.round(totalAreaM2 * 10) / 10,
+      useful_area_m2: Math.round(usefulAreaM2 * 10) / 10,
+      waste_area_m2: Math.round(wasteAreaM2 * 10) / 10,
+      waste_percent: Math.round(wastePercent * 10) / 10,
+      waste_per_side_mm: wastePerSideMm,
+      inner_waste_mm: Math.round(innerWasteMm * 10) / 10,
+      remaining_jumbo_m: remainingJumboM,
+      shortage_cycles: shortageCycles,
+      shortage_length_m: shortageLengthM,
+      optimal_additional_rolls: optimalAdditionalRolls
+    };
+  }
+
+  /* ================= UI ================= */
+  var els = {
+    materialWidthMm: document.getElementById("materialWidthMm"),
+    bigRollLengthM: document.getElementById("bigRollLengthM"),
+    orderRolls: document.getElementById("orderRolls"),
+    rollWidthMm: document.getElementById("rollWidthMm"),
+    rollLengthM: document.getElementById("rollLengthM"),
+    additionalWidthMm: document.getElementById("additionalWidthMm")
+  };
+  var errEls = {
+    materialWidthMm: document.getElementById("err-materialWidthMm"),
+    bigRollLengthM: document.getElementById("err-bigRollLengthM"),
+    orderRolls: document.getElementById("err-orderRolls"),
+    rollWidthMm: document.getElementById("err-rollWidthMm"),
+    rollLengthM: document.getElementById("err-rollLengthM"),
+    additionalWidthMm: document.getElementById("err-additionalWidthMm")
+  };
+  var wasteBadge = document.getElementById("wasteBadge");
+  var resultsBody = document.getElementById("resultsBody");
+  var themeToggle = document.getElementById("themeToggle");
+  var themeColorMeta = document.getElementById("themeColorMeta");
+
+  Object.keys(els).forEach(function (key) {
+    els[key].addEventListener("input", recompute);
+  });
+
+  function numOrNaN(str) {
+    if (str === "" || str === null || str === undefined) return NaN;
+    return Number(str);
+  }
+
+  function formatMm(n) {
+    return (Number.isInteger(n) ? n : n.toFixed(1)) + " мм";
+  }
+
+  function validateForm() {
+    var errors = {};
+    var raw = {
+      materialWidthMm: numOrNaN(els.materialWidthMm.value),
+      bigRollLengthM: numOrNaN(els.bigRollLengthM.value),
+      orderRolls: numOrNaN(els.orderRolls.value),
+      rollWidthMm: numOrNaN(els.rollWidthMm.value),
+      rollLengthM: numOrNaN(els.rollLengthM.value),
+      additionalWidthMm: els.additionalWidthMm.value.trim() === "" ? null : numOrNaN(els.additionalWidthMm.value)
+    };
+
+    if (!(raw.materialWidthMm >= 550 && raw.materialWidthMm <= 910)) {
+      errors.materialWidthMm = "Введите значение от 550 до 910 мм";
+    }
+    if (!(raw.rollWidthMm >= 20 && raw.rollWidthMm <= 310)) {
+      errors.rollWidthMm = "Введите значение от 20 до 310 мм";
+    }
+    if (!(raw.rollLengthM >= 30 && raw.rollLengthM <= 1100)) {
+      errors.rollLengthM = "Введите значение от 30 до 1100 м";
+    }
+    if (!(raw.bigRollLengthM >= 30 && raw.bigRollLengthM <= 22000)) {
+      errors.bigRollLengthM = "Введите значение от 30 до 22000 м";
+    }
+    if (!(Number.isFinite(raw.orderRolls) && Number.isInteger(raw.orderRolls) && raw.orderRolls >= 1)) {
+      errors.orderRolls = "Введите целое число больше 0";
+    }
+    if (raw.additionalWidthMm !== null) {
+      if (!(raw.additionalWidthMm >= 20 && raw.additionalWidthMm <= 310)) {
+        errors.additionalWidthMm = "Введите значение от 20 до 310 мм";
+      }
+    }
+    if (!errors.bigRollLengthM && !errors.rollLengthM && raw.bigRollLengthM < raw.rollLengthM) {
+      errors.bigRollLengthM = "Намотка Джамба должна быть не меньше длины рулона.";
+    }
+
+    var usefulWidthMm = Number.isFinite(raw.materialWidthMm) ? raw.materialWidthMm - 20 : NaN;
+
+    return {
+      raw: raw,
+      usefulWidthMm: usefulWidthMm,
+      errors: errors,
+      valid: Object.keys(errors).length === 0 && Number.isFinite(usefulWidthMm)
+    };
+  }
+
+  function setFieldErrors(errors) {
+    Object.keys(errEls).forEach(function (key) {
+      errEls[key].textContent = errors[key] || "";
+    });
+  }
+
+  function recompute() {
+    var v = validateForm();
+    setFieldErrors(v.errors);
+
+    var plan = null;
+    var errorMsg = null;
+
+    if (v.valid) {
+      try {
+        plan = calculate(
+          v.raw.materialWidthMm,
+          v.usefulWidthMm,
+          v.raw.rollWidthMm,
+          v.raw.rollLengthM,
+          v.raw.bigRollLengthM,
+          v.raw.orderRolls,
+          v.raw.additionalWidthMm
+        );
+      } catch (e) {
+        errorMsg = e.message;
+      }
+    }
+
+    renderBadge(plan);
+    renderResults(plan, errorMsg);
+  }
+
+  function renderBadge(plan) {
+    if (plan) {
+      wasteBadge.textContent = "Отход: " + plan.waste_percent.toFixed(1) + "%";
+      wasteBadge.className = "badge" + (plan.waste_percent > 7 ? " badge-danger" : "");
+    } else {
+      wasteBadge.textContent = "Ошибка";
+      wasteBadge.className = "badge badge-danger";
+    }
+  }
+
+  var LAYERS_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>';
+  var LIGHTBULB_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4M12 2a6 6 0 0 0-4 10.472V15a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.528A6 6 0 0 0 12 2z"/></svg>';
+
+  function el(tag, className, html) {
+    var e = document.createElement(tag);
+    if (className) e.className = className;
+    if (html !== undefined) e.innerHTML = html;
+    return e;
+  }
+
+  function buildRow(k, v, dangerValueOnly, dangerFull, isTime) {
+    var row = el("div", "row" + (dangerFull ? " danger" : "") + (isTime ? " time" : ""));
+    var kEl = el("span", "k");
+    kEl.textContent = k;
+    var vEl = el("span", "v");
+    vEl.textContent = v;
+    if (dangerValueOnly) vEl.style.color = "hsl(var(--destructive))";
+    row.appendChild(kEl);
+    row.appendChild(vEl);
+    return row;
+  }
+
+  function buildTipBox(plan) {
+    var s = plan.optimal_additional_rolls[0];
+    var box = el(
+      "div",
+      "tip-box",
+      LIGHTBULB_ICON +
+        '<div><div class="tip-title">Оптимизация отхода</div>' +
+        '<div class="tip-text">Отход более 7%. Рекомендуемый доп. размер: ' +
+        '<button type="button" class="tip-value" id="applyTip">' + s.width + ' мм</button> (' + s.count + " шт.)</div></div>"
+    );
+    box.querySelector("#applyTip").addEventListener("click", function () {
+      els.additionalWidthMm.value = s.width;
+      recompute();
+    });
+    return box;
+  }
+
+  function buildStatGrid(plan) {
+    var grid = el("div", "stat-grid");
+    var hasAdd = !!plan.additional_width_mm;
+
+    var box1 = el(
+      "div",
+      "stat-box",
+      '<div class="stat-label">' + LAYERS_ICON + "<span>Ручьев осн.</span></div>" +
+        '<div class="stat-value">' + plan.main_count + "</div>" +
+        '<div class="stat-sub">Ширина: ' + plan.roll_width_mm + " мм</div>"
+    );
+
+    var box2 = el(
+      "div",
+      "stat-box",
+      '<div class="stat-label">' + LAYERS_ICON + "<span>Ручьев доп.</span></div>" +
+        '<div class="stat-value">' + (hasAdd ? 1 : 0) + "</div>" +
+        '<div class="stat-sub">' + (hasAdd ? "Ширина: " + plan.additional_width_mm + " мм" : "Нет доп. размера") + "</div>"
+    );
+
+    grid.appendChild(box1);
+    grid.appendChild(box2);
+    return grid;
+  }
+
+  function buildScheme(plan) {
+    var wrap = el("div", "scheme");
+    var head = el(
+      "div",
+      "scheme-head",
+      '<div class="scheme-title">Схема раскроя</div><div class="scheme-width">Общая: ' + plan.material_width_mm + " мм</div>"
+    );
+    wrap.appendChild(head);
+
+    var viz = el("div", "scheme-viz");
+    var strip = el("div", "scheme-strip");
+
+    var pieces = [];
+    if (plan.waste_per_side_mm > 0.01) {
+      pieces.push({ label: formatMm(plan.waste_per_side_mm), width: plan.waste_per_side_mm, kind: "waste" });
+    }
+    for (var i = 0; i < plan.main_count; i++) {
+      pieces.push({ label: formatMm(plan.roll_width_mm), width: plan.roll_width_mm, kind: "primary" });
+    }
+    if (plan.additional_width_mm && plan.additional_width_mm > 0) {
+      pieces.push({ label: formatMm(plan.additional_width_mm), width: plan.additional_width_mm, kind: "secondary" });
+    }
+    if (plan.waste_per_side_mm > 0.01) {
+      pieces.push({ label: formatMm(plan.waste_per_side_mm), width: plan.waste_per_side_mm, kind: "waste" });
+    }
+
+    var rollIndex = 0;
+    pieces.forEach(function (p) {
+      var pct = (p.width / plan.material_width_mm) * 100;
+      var pieceEl = el("div", "piece");
+      pieceEl.style.width = pct + "%";
+      pieceEl.title = p.label;
+
+      if (p.kind === "primary" || p.kind === "secondary") {
+        var isTop = rollIndex % 2 === 0;
+        rollIndex++;
+        var inner = el("div", "piece-roll-inner");
+        inner.style[isTop ? "top" : "bottom"] = "0";
+        inner.style.background = p.kind === "primary" ? "hsl(var(--muted-foreground))" : "hsl(var(--primary))";
+        var span = el("span");
+        if (pct < 6) span.style.opacity = "0";
+        span.textContent = p.label;
+        inner.appendChild(span);
+        pieceEl.appendChild(inner);
+      } else {
+        var innerW = el("div", "piece-waste-inner");
+        innerW.style.background = "hsl(var(--destructive) / 80%)";
+        if (pct > 5) {
+          var spanW = el("span");
+          spanW.textContent = p.label;
+          innerW.appendChild(spanW);
+        }
+        pieceEl.appendChild(innerW);
+      }
+      strip.appendChild(pieceEl);
+    });
+
+    viz.appendChild(strip);
+
+    var legend = el(
+      "div",
+      "legend",
+      '<div class="legend-item"><span class="legend-dot" style="background:hsl(var(--muted-foreground))"></span>Основная</div>' +
+        '<div class="legend-item"><span class="legend-dot" style="background:hsl(var(--primary))"></span>Доп.</div>' +
+        '<div class="legend-item"><span class="legend-dot" style="background:hsl(var(--destructive) / 80%)"></span>Отход</div>'
+    );
+    viz.appendChild(legend);
+
+    wrap.appendChild(viz);
+    return wrap;
+  }
+
+  function renderResults(plan, errorMsg) {
+    resultsBody.innerHTML = "";
+
+    if (errorMsg) {
+      var errBox = el("div", "error-msg");
+      errBox.textContent = errorMsg;
+      resultsBody.appendChild(errBox);
+      return;
+    }
+    if (!plan) {
+      resultsBody.appendChild(el("div", "placeholder-msg", "Введите корректные данные"));
+      return;
+    }
+
+    var frag = el("div");
+    frag.style.display = "flex";
+    frag.style.flexDirection = "column";
+    frag.style.gap = "16px";
+
+    frag.appendChild(buildScheme(plan));
+    frag.appendChild(buildStatGrid(plan));
+
+    var rowsWrap = el("div", "rows");
+
+    if (plan.optimal_additional_rolls && plan.optimal_additional_rolls.length > 0) {
+      rowsWrap.appendChild(buildTipBox(plan));
+    }
+
+    rowsWrap.appendChild(buildRow("Всего рулонов осн.:", plan.total_main_rolls + " шт."));
+    rowsWrap.appendChild(buildRow("Излишек / Нехватка:", plan.surplus_main_rolls + " / " + plan.shortage_rolls, true));
+    rowsWrap.appendChild(buildRow("Доп. рулонов:", plan.total_additional_rolls + " шт."));
+    rowsWrap.appendChild(buildRow("Отход на кромки (с 1 стороны):", plan.waste_per_side_mm.toFixed(1) + " мм"));
+    rowsWrap.appendChild(buildRow("Циклов (прогонов):", String(plan.cycles_used)));
+    rowsWrap.appendChild(buildRow("Остаток Джамба:", plan.remaining_jumbo_m + " м"));
+
+    if (plan.shortage_rolls > 0) {
+      rowsWrap.appendChild(buildRow("Не хватает циклов:", String(plan.shortage_cycles), false, true));
+      rowsWrap.appendChild(buildRow("Не хватает метров:", plan.shortage_length_m + " м", false, true));
+    }
+
+    if (plan.estimated_hours) {
+      var totalMins = Math.round(plan.estimated_hours * 60);
+      var h = Math.floor(totalMins / 60);
+      var m = totalMins % 60;
+      rowsWrap.appendChild(buildRow("Примерное время:", h + " ч. " + m + " мин.", false, false, true));
+    }
+
+    frag.appendChild(rowsWrap);
+    resultsBody.appendChild(frag);
+  }
+
+  /* ================= Тема ================= */
+  var dark = !!(window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
+
+  function applyTheme() {
+    document.documentElement.classList.toggle("dark", dark);
+    themeToggle.textContent = dark ? "Светлая" : "Тёмная";
+    themeColorMeta.setAttribute("content", dark ? "#0b111e" : "#f4f6fb");
+  }
+
+  themeToggle.addEventListener("click", function () {
+    dark = !dark;
+    applyTheme();
+  });
+
+  applyTheme();
+  recompute();
+})();
+
+if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) {
+  window.addEventListener("load", function () {
+    navigator.serviceWorker.register("./sw.js").catch(function () {});
+  });
+}
+</script>
+</body>
+</html>
