@@ -1,4 +1,4 @@
-var CACHE = "narezka-v1";
+var CACHE = "narezka-v2";
 var ASSETS = ["./", "./index.html", "./apple-touch-icon.png"];
 
 self.addEventListener("install", function (e) {
